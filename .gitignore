@@ -1,5 +1,5 @@
 *.micro.go
 *.pb.go
--api
--srv
--web
+*-api
+*-srv
+*-web
