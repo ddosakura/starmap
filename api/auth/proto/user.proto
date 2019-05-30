@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package starmap.api.auth;
+
+import "github.com/micro/go-api/proto/api.proto";
+
+service User {
+    rpc Login(go.api.Request) returns (go.api.Response) {}
+    rpc Register(go.api.Request) returns (go.api.Response) {}
+    rpc Logout(go.api.Request) returns (go.api.Response) {}
+
+    rpc Info(go.api.Request) returns (go.api.Response) {}
+    rpc Update(go.api.Request) returns (go.api.Response) {}
+}
