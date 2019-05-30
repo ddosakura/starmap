@@ -1,0 +1,125 @@
+version: '2'
+
+services:
+  # 服务发现 & Gateway
+  consul:
+    image: consul:1.4.2
+    # restart: always
+    # hostname: "registry"
+    # command: -server -bootstrap -rejoin 
+    command: consul agent -dev -client 0.0.0.0 -ui -bootstrap -rejoin
+    ports:
+    - "8300:8300"
+    - "8400:8400"
+    - "8500:8500"
+    - "8600:53/udp"
+    networks:
+      default:
+        aliases:
+          - registry
+  microapi:
+    image: microhq/micro:latest
+    # restart: always
+    command: api
+    links:
+    - consul
+    ports:
+    - "8080:8080"
+    environment:
+      MICRO_REGISTER_TTL: 10
+      MICRO_REGISTER_INTERVAL: 5
+      MICRO_REGISTRY: consul
+      MICRO_REGISTRY_ADDRESS: "registry:8500"
+      MICRO_API_NAMESPACE: starmap.api
+      MICRO_API_HANDLER: api
+    networks:
+      default:
+        aliases:
+          - microapi
+  microproxy:
+    image: microhq/micro:latest
+    # restart: always
+    command: proxy
+    links:
+    - consul
+    ports:
+    - "8081:8081"
+    environment:
+      MICRO_REGISTER_TTL: 10
+      MICRO_REGISTER_INTERVAL: 5
+      MICRO_REGISTRY: consul
+      MICRO_REGISTRY_ADDRESS: "registry:8500"
+    networks:
+      default:
+        aliases:
+          - microproxy
+  microweb:
+    image: microhq/micro:latest
+    # restart: always
+    command: web
+    links:
+    - consul
+    ports:
+    - "8082:8082"
+    environment:
+      MICRO_REGISTER_TTL: 10
+      MICRO_REGISTER_INTERVAL: 5
+      MICRO_REGISTRY: consul
+      MICRO_REGISTRY_ADDRESS: "registry:8500"
+      # MICRO_WEB_NAMESPACE: starmap.web
+    networks:
+      default:
+        aliases:
+          - microweb
+
+  # DB
+  adminer:
+    image: adminer:4.6.3
+    ports:
+      - 8000:8080
+    environment:
+      ADMINER_DESIGN: ng9
+    networks:
+      default:
+        aliases:
+          - adminer
+  mongo:
+    image: mongo:4.0
+    ports:
+      - 27017:27017
+    #volumes:
+    #  - path/to/???:/docker-entrypoint-initdb.d/
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: starpass
+    networks:
+      default:
+        aliases:
+          - mongo
+  mysql:
+    image: mysql:5.7
+    #volumes:
+    #  - path/to/???/conf:/etc/mysql/conf.d
+    #  - path/to/???/logs:/logs
+    #  - path/to/???/data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: starpass
+    networks:
+      default:
+        aliases:
+          - mysql
+  redis:
+    image: redis:5.0
+    ports:
+      - 6379:6379
+    networks:
+      default:
+        aliases:
+          - redis
+
+networks:
+  default:
+    ipam:
+      config:
+      - subnet: 172.30.0.0/16
+        gateway: 172.30.0.1
