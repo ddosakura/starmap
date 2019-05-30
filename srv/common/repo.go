@@ -3,6 +3,12 @@ package common
 import (
 	"context"
 
+	//_ "github.com/jinzhu/gorm/dialects/mysql"
+	//_ "github.com/jinzhu/gorm/dialects/mssql"
+	//_ "github.com/jinzhu/gorm/dialects/postgres"
+	//_ "github.com/jinzhu/gorm/dialects/sqlite"
+
+	"github.com/jinzhu/gorm"
 	"github.com/micro/go-log"
 	"github.com/micro/go-micro"
 	"github.com/micro/go-micro/server"
@@ -22,7 +28,7 @@ func MongoRepo(service micro.Service) (wrapper server.HandlerWrapper, deferFn fu
 
 	return func(fn server.HandlerFunc) server.HandlerFunc {
 			return func(ctx context.Context, req server.Request, rsp interface{}) error {
-				ctx = context.WithValue(ctx, CKMongoRepo, repo)
+				ctx = context.WithValue(ctx, RepoKey{CKMongoRepo}, repo)
 				return fn(ctx, req, rsp)
 			}
 		}, func() {
@@ -32,6 +38,22 @@ func MongoRepo(service micro.Service) (wrapper server.HandlerWrapper, deferFn fu
 
 // GetMongoRepo from ctx
 func GetMongoRepo(ctx context.Context) (*mgo.Session, bool) {
-	c, ok := ctx.Value(CKMongoRepo).(*mgo.Session)
+	c, ok := ctx.Value(RepoKey{CKMongoRepo}).(*mgo.Session)
 	return c.Clone(), ok
+}
+
+// GormRepo Wrapper
+func GormRepo(service micro.Service, repo *gorm.DB) server.HandlerWrapper {
+	return func(fn server.HandlerFunc) server.HandlerFunc {
+		return func(ctx context.Context, req server.Request, rsp interface{}) error {
+			ctx = context.WithValue(ctx, RepoKey{CKGormRepo}, repo)
+			return fn(ctx, req, rsp)
+		}
+	}
+}
+
+// GetGormRepo from ctx
+func GetGormRepo(ctx context.Context) (*gorm.DB, bool) {
+	c, ok := ctx.Value(RepoKey{CKGormRepo}).(*gorm.DB)
+	return c, ok
 }

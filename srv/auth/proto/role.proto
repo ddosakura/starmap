@@ -10,6 +10,5 @@ service Role {
 }
 
 message RoleInfo {
-    int64 roleId = 1;
-    repeated int64 permissionId = 2;
+    string id = 1;
 }

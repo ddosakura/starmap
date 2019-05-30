@@ -10,5 +10,5 @@ service Permission {
 }
 
 message PermissionInfo {
-    int64 permissionId = 1;
+    string id = 1;
 }

@@ -12,19 +12,17 @@ service User {
 }
 
 message UserInfo {
-    int64 userId = 1;
-    repeated int64 roleId = 2;
+    string id = 1;
 
-    string username = 3;
-    string password = 4;
+    string username = 2;
+    string password = 3;
 
-    string nickname = 5;
-    string avatar = 6; // 头像
-    string motto = 7; // 格言
-    string phone = 8;
-    string email = 9;
-    repeated string homepage = 10;
-    map<string, BindingList> binding = 11;
+    string nickname = 4;
+    string avatar = 5; // 头像
+    string motto = 6; // 格言
+    string phone = 7;
+    string email = 8;
+    string homepage = 9;
 }
 
 message BindingList{

@@ -14,9 +14,10 @@ type config struct {
 			URL string `env:"URL" default:"127.0.0.1:6379"`
 		} `env:"REDIS"`
 		MySQL struct {
-			URL  string `env:"URL" default:"127.0.0.1:3306"`
+			Host string `env:"HOST" default:"127.0.0.1:3306"`
 			User string `env:"USER" default:"root"`
 			Pass string `env:"PASS" default:"starpass"`
+			DB   string `env:"DB" default:"starmap"`
 		} `env:"MYSQL"`
 	} `env:"REPO"`
 }

@@ -1,9 +1,15 @@
 package common
 
-// CtxKey for Context Value
-type CtxKey int
+// RepoKey for Context Value
+type RepoKey struct {
+	db RepoKeyT
+}
+
+// RepoKeyT for RepoKey
+type RepoKeyT int
 
 // CtxKey(s)
 const (
-	CKMongoRepo CtxKey = iota
+	CKMongoRepo RepoKeyT = iota
+	CKGormRepo
 )

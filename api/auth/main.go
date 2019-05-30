@@ -3,10 +3,10 @@ package main
 import (
 	"github.com/micro/go-log"
 
-	"github.com/ddosakura/starmap/api/auth/raw"
 	"github.com/ddosakura/starmap/api/auth/client"
 	"github.com/ddosakura/starmap/api/auth/handler"
 	proto "github.com/ddosakura/starmap/api/auth/proto"
+	"github.com/ddosakura/starmap/api/auth/raw"
 	"github.com/micro/go-micro"
 )
 

@@ -2,12 +2,13 @@ package handler
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/ddosakura/starmap/srv/auth/models"
 	proto "github.com/ddosakura/starmap/srv/auth/proto"
 	"github.com/ddosakura/starmap/srv/auth/raw"
 	"github.com/ddosakura/starmap/srv/common"
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/jinzhu/gorm"
 )
 
 // User Handler
@@ -15,14 +16,13 @@ type User struct{}
 
 // Login Action
 func (s *User) Login(ctx context.Context, req *proto.UserInfo, res *proto.UserInfo) error {
-	repo, ok := common.GetMongoRepo(ctx)
+	repo, ok := common.GetGormRepo(ctx)
 	if !ok {
 		res = nil
 		return raw.ErrRepoNotFound
 	}
-	db := repo.DB(raw.AuthDB)
 
-	if err := s.findUser(db.C("userinfo"), req.Username, res); err != nil {
+	if err := s.findUser(repo, req.Username, res); err != nil {
 		res = nil
 		return raw.ErrUserNotExist
 	}
@@ -30,35 +30,42 @@ func (s *User) Login(ctx context.Context, req *proto.UserInfo, res *proto.UserIn
 		res = nil
 		return raw.ErrPassWrong
 	}
-
 	res.Password = ""
 	return nil
 }
 
-func (s *User) findUser(repo *mgo.Collection, name string, user *proto.UserInfo) error {
-	return repo.Find(bson.M{"username": name}).One(user)
+func (s *User) findUser(repo *gorm.DB, name string, user *proto.UserInfo) error {
+	return repo.First(user, "username = ?", name).Error
 }
 
 // Register Action
 func (s *User) Register(ctx context.Context, req *proto.UserInfo, res *proto.UserInfo) error {
-	res = nil
-	repo, ok := common.GetMongoRepo(ctx)
+	repo, ok := common.GetGormRepo(ctx)
 	if !ok {
+		res = nil
 		return raw.ErrRepoNotFound
 	}
-	db := repo.DB(raw.AuthDB)
+	//repo.Lock()
+	//defer repo.Unlock()
+	tx := repo.Begin()
+	defer tx.Commit()
 
-	c := db.C("userinfo")
-	if err := s.findUser(c, req.Username, res); err != nil {
-		if err == mgo.ErrNotFound {
-			err = c.Insert(req)
+	fmt.Println("start")
+
+	if err := s.findUser(repo, req.Username, res); err != nil {
+		if err == gorm.ErrRecordNotFound {
+			err = repo.Create(models.UserInfo{
+				new(common.Model),
+				req,
+				new(models.BeforeCreateHook),
+			}).Error
 			if err == nil {
 				return nil
 			}
+			tx.Rollback()
 		}
 		return raw.ErrRepoError
 	}
-
 	res = nil
 	return raw.ErrUserHasExist
 }
