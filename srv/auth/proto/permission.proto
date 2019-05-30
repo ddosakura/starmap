@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package starmap.srv.auth;
+
+service Permission {
+    rpc Insert(PermissionInfo) returns(PermissionInfo) {}
+    rpc Delete(PermissionInfo) returns(PermissionInfo) {}
+    rpc Select(PermissionInfo) returns(PermissionInfo) {}
+    rpc Update(PermissionInfo) returns(PermissionInfo) {}
+}
+
+message PermissionInfo {
+    int64 permissionId = 1;
+}

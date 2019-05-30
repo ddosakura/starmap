@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package starmap.srv.auth;
+
+service Role {
+    rpc Insert(RoleInfo) returns(RoleInfo) {}
+    rpc Delete(RoleInfo) returns(RoleInfo) {}
+    rpc Select(RoleInfo) returns(RoleInfo) {}
+    rpc Update(RoleInfo) returns(RoleInfo) {}
+}
+
+message RoleInfo {
+    int64 roleId = 1;
+    repeated int64 permissionId = 2;
+}

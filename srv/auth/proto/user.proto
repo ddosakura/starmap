@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package starmap.srv.auth;
+
+service User {
+    rpc Login(UserInfo) returns (UserInfo) {}
+    rpc Register(UserInfo) returns (UserInfo) {}
+    rpc Logout(UserInfo) returns (UserInfo) {}
+
+    rpc Info(UserInfo) returns (UserInfo) {}
+    rpc Update(UserInfo) returns (UserInfo) {}
+}
+
+message UserInfo {
+    int64 userId = 1;
+    repeated int64 roleId = 2;
+
+    string username = 3;
+    string password = 4;
+
+    string nickname = 5;
+    string avatar = 6; // 头像
+    string motto = 7; // 格言
+    string phone = 8;
+    string email = 9;
+    repeated string homepage = 10;
+    map<string, BindingList> binding = 11;
+}
+
+message BindingList{
+	repeated string item = 1;
+}
