@@ -9,7 +9,8 @@ service User {
     // rpc Logout(UserToken) returns (None) {}
 
     // 用户认证
-    rpc Info(UserToken) returns (UserToken) {} // Check JWT for Other Service
+    rpc Info(UserToken) returns (UserToken) {} // Also Check JWT
+    rpc Check(UserToken) returns (UserToken) {} // Check JWT for Other Service
     rpc Change(UserToken) returns (UserToken) {}
 
     // 用户管理

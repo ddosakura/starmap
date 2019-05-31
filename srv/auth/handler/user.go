@@ -107,8 +107,29 @@ func (s *User) Register(ctx context.Context, req *proto.UserAuth, res *proto.Use
 }
 
 // Info Action
-// TODO: 区分 Info(from db) & Check(from jwt)
 func (s *User) Info(ctx context.Context, req *proto.UserToken, res *proto.UserToken) error {
+	repo, ok := common.GetMongoRepo(ctx)
+	if !ok {
+		return raw.ErrRepoNotFound
+	}
+	token, err := common.ValidUserJWT(req.Token)
+	if err != nil {
+		return err
+	}
+	user := &proto.UserInfo{}
+	c := repo.DB(raw.UserDB).C(raw.UserInfoC)
+	if err := c.Find(&bson.M{"uuid": token.UserInfo.UUID}).One(user); err != nil {
+		return raw.ErrRepoError
+	}
+	if token, err := common.BuildUserJWT(user).Sign(jwtTerm); err == nil {
+		res.Token = token
+		return nil
+	}
+	return raw.ErrSignJWT
+}
+
+// Check Action
+func (s *User) Check(ctx context.Context, req *proto.UserToken, res *proto.UserToken) error {
 	token, err := common.ValidUserJWT(req.Token)
 	if err != nil {
 		return err

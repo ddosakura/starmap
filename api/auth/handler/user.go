@@ -64,10 +64,16 @@ func (u *User) Info(ctx context.Context, req *api.Request, res *api.Response) er
 	return common.
 		REST(ctx, req, res).
 		LoadAuthService(client.AuthUserFromContext).
-		CheckJWT().
 		ACTION(common.POST | common.GET).
 		Do(func(s *common.RESTful) (interface{}, error) {
-			return s.Token.User, nil
+			user, err := s.AuthUserClient.Check(s.Ctx, &auth.UserToken{
+				Token: common.GetJWT(s.Req),
+			})
+			if err != nil {
+				return nil, err
+			}
+			s.FreshJWT(user.Token)
+			return user.User, nil
 		}).
 		Final()
 }

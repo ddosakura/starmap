@@ -95,7 +95,7 @@ func (s *RESTful) LoadAuthService(loader func(ctx context.Context) (auth.UserSer
 // CheckJWT for RESTful
 func (s *RESTful) CheckJWT() *RESTful {
 	Token := GetJWT(s.Req)
-	token, err := s.AuthUserClient.Info(s.Ctx, &auth.UserToken{
+	token, err := s.AuthUserClient.Check(s.Ctx, &auth.UserToken{
 		Token: Token,
 	})
 	if err != nil {
