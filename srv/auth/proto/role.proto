@@ -10,5 +10,5 @@ service Role {
 }
 
 message RoleInfo {
-    string id = 1;
+    string ID = 1;
 }

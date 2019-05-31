@@ -43,6 +43,8 @@ func main() {
 		&models.UserInfo{},
 		&models.RoleInfo{},
 		&models.PermissionInfo{},
+		&models.UserRole{},
+		&models.RolePermission{},
 	)
 
 	log.Log("DB OK!")
