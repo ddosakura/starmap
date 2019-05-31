@@ -1,11 +1,10 @@
-package handler
+package common
 
 import (
 	"time"
 
 	proto "github.com/ddosakura/starmap/srv/auth/proto"
 	"github.com/ddosakura/starmap/srv/auth/raw"
-	"github.com/ddosakura/starmap/srv/common"
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
@@ -25,28 +24,37 @@ type UserJWT struct {
 	UserInfo *proto.UserInfo
 }
 
-func buildUserJWT(u *proto.UserInfo) *UserJWT {
+// BuildUserJWT by userinfo
+func BuildUserJWT(u *proto.UserInfo) *UserJWT {
 	return &UserJWT{
 		StandardClaims: jwt.StandardClaims{},
 		UserInfo:       u,
 	}
 }
 
-// sign JWT
-func (c *UserJWT) sign(d time.Duration) (string, error) {
+// Sign JWT
+func (c *UserJWT) Sign(d time.Duration) (string, error) {
 	iat := time.Now()
 	expireTime := iat.Add(d).Unix()
 	c.Issuer = "starmap"
 	c.IssuedAt = iat.Unix()
 	c.ExpiresAt = expireTime
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, c)
-	return jwtToken.SignedString(common.ENV.KeyJWT())
+	return jwtToken.SignedString(ENV.KeyJWT())
+}
+
+// FreshJWT if will expire
+func FreshJWT(t *UserJWT, freshD time.Duration, termD time.Duration) (string, error) {
+	if time.Now().Add(freshD).After(time.Unix(t.ExpiresAt, 0)) {
+		return t.Sign(termD)
+	}
+	return "", nil
 }
 
 // ValidUserJWT for UserInfo
 func ValidUserJWT(tokenStr string) (t *UserJWT, e error) {
 	token, err := jwt.ParseWithClaims(tokenStr, &UserJWT{}, func(token *jwt.Token) (interface{}, error) {
-		return common.ENV.KeyJWT(), nil
+		return ENV.KeyJWT(), nil
 	})
 	if err != nil {
 		return nil, err

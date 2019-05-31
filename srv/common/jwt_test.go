@@ -1,4 +1,4 @@
-package handler
+package common
 
 import (
 	"testing"
@@ -10,16 +10,15 @@ import (
 	proto "github.com/ddosakura/starmap/srv/auth/proto"
 )
 
-// todo this test, use `CONFIG_KEY_JWT=123456 go test -v`
 func TestJWT(t *testing.T) {
 	u := &proto.UserInfo{
 		Nickname: "Hello World!",
 		Homepage: "www.baidu.com",
 	}
-	TOKEN := buildUserJWT(u)
+	TOKEN := BuildUserJWT(u)
 	pretty.Println(TOKEN)
 
-	jwt, e := TOKEN.sign(time.Second * 3)
+	jwt, e := TOKEN.Sign(time.Second * 3)
 	if e != nil {
 		t.Fatal(e)
 		return

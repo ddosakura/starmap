@@ -17,24 +17,21 @@ type User struct {
 
 // Login API
 func (u *User) Login(ctx context.Context, req *api.Request, res *api.Response) error {
-	authUserClient, ok := client.AuthUserFromContext(ctx)
-	if !ok {
-		return errors.InternalServerError(raw.SrvName, "auth client not found")
-	}
-
 	return common.
 		REST(ctx, req, res).
+		LoadAuthService(client.AuthUserFromContext).
 		ACTION(common.POST|common.GET).
 		Check("user", false, nil).
 		Check("pass", false, nil).
 		Do(func(s *common.RESTful) (interface{}, error) {
-			userToken, err := authUserClient.Login(ctx, &auth.UserAuth{
+			userToken, err := s.AuthUserClient.Login(ctx, &auth.UserAuth{
 				Username: s.Params["user"].Values[0],
 				Password: s.Params["pass"].Values[0],
 			})
 			if err != nil {
-				return nil, errors.BadRequest(raw.SrvName, err.Error())
+				return nil, common.CleanErrResponse(raw.SrvName, err, errors.BadRequest)
 			}
+			s.FreshJWT(userToken.Token)
 			return userToken, nil
 		}).
 		Final()
@@ -42,40 +39,73 @@ func (u *User) Login(ctx context.Context, req *api.Request, res *api.Response) e
 
 // Register API
 func (u *User) Register(ctx context.Context, req *api.Request, res *api.Response) error {
-	authUserClient, ok := client.AuthUserFromContext(ctx)
-	if !ok {
-		return errors.InternalServerError(raw.SrvName, "auth client not found")
-	}
-
 	return common.
 		REST(ctx, req, res).
+		LoadAuthService(client.AuthUserFromContext).
 		ACTION(common.POST|common.GET).
 		Check("user", false, nil).
 		Check("pass", false, nil).
 		Do(func(s *common.RESTful) (interface{}, error) {
-			userToken, err := authUserClient.Register(ctx, &auth.UserAuth{
+			userToken, err := s.AuthUserClient.Register(ctx, &auth.UserAuth{
 				Username: s.Params["user"].Values[0],
 				Password: s.Params["pass"].Values[0],
 			})
 			if err != nil {
-				return nil, errors.BadRequest(raw.SrvName, err.Error())
+				return nil, common.CleanErrResponse(raw.SrvName, err, errors.BadRequest)
 			}
+			s.FreshJWT(userToken.Token)
 			return userToken, nil
 		}).
 		Final()
 }
 
-// Logout API
-func (u *User) Logout(context.Context, *api.Request, *api.Response) error {
-	return nil
-}
-
 // Info API
-func (u *User) Info(context.Context, *api.Request, *api.Response) error {
-	return nil
+func (u *User) Info(ctx context.Context, req *api.Request, res *api.Response) error {
+	return common.
+		REST(ctx, req, res).
+		LoadAuthService(client.AuthUserFromContext).
+		CheckJWT().
+		ACTION(common.POST | common.GET).
+		Do(func(s *common.RESTful) (interface{}, error) {
+			return s.Token.User, nil
+		}).
+		Final()
 }
 
 // Update API
-func (u *User) Update(context.Context, *api.Request, *api.Response) error {
-	return nil
+func (u *User) Update(ctx context.Context, req *api.Request, res *api.Response) error {
+	return common.
+		REST(ctx, req, res).
+		LoadAuthService(client.AuthUserFromContext).
+		CheckJWT().
+		ACTION(common.POST|common.GET).
+		Check("pass", false, []string{""}).
+		Check("nickname", false, []string{""}).
+		Check("avatar", false, []string{""}).
+		Check("motto", false, []string{""}).
+		Check("phone", false, []string{""}).
+		Check("email", false, []string{""}).
+		Check("homepage", false, []string{""}).
+		Do(func(s *common.RESTful) (interface{}, error) {
+			user := &auth.UserToken{
+				Auth: &auth.UserAuth{
+					Password: s.Params["pass"].Values[0],
+				},
+				User: &auth.UserInfo{
+					Nickname: s.Params["nickname"].Values[0],
+					Avatar:   s.Params["avatar"].Values[0],
+					Motto:    s.Params["motto"].Values[0],
+					Phone:    s.Params["phone"].Values[0],
+					Email:    s.Params["email"].Values[0],
+					Homepage: s.Params["homepage"].Values[0],
+				},
+			}
+			user, err := s.AuthUserClient.Change(ctx, user)
+			if err != nil {
+				return nil, err
+			}
+			s.FreshJWT(user.Token)
+			return user.User, nil
+		}).
+		Final()
 }

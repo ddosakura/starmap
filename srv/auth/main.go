@@ -47,12 +47,15 @@ func main() {
 		&models.RolePermission{},
 	)
 
-	log.Log("DB OK!")
+	//log.Log("DB OK!")
 
 	wrapperRepo := common.GormRepo(service, repo)
+	wrapperMongo, closeMongo := common.MongoRepo(service)
+	defer closeMongo()
 	// Initialise service
 	service.Init(
 		micro.WrapHandler(wrapperRepo),
+		micro.WrapHandler(wrapperMongo),
 	)
 
 	// Register Handler

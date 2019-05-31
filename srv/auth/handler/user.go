@@ -9,11 +9,13 @@ import (
 	"github.com/ddosakura/starmap/srv/auth/raw"
 	"github.com/ddosakura/starmap/srv/common"
 	"github.com/jinzhu/gorm"
+	"gopkg.in/mgo.v2/bson"
 )
 
 const (
-	// TODO: 考虑过期时间
-	jwtTerm = time.Hour * 24
+	// TODO: 考虑过期时间、刷新时间
+	jwtTerm  = time.Hour * 24
+	jwtFresh = time.Hour * 6
 )
 
 // User Handler
@@ -34,8 +36,16 @@ func (s *User) Login(ctx context.Context, req *proto.UserAuth, res *proto.UserTo
 		return raw.ErrPassWrong
 	}
 
-	// TODO: 获取用户信息
-	if token, err := buildUserJWT(nil).sign(jwtTerm); err == nil {
+	user := &proto.UserInfo{}
+	repo2, ok := common.GetMongoRepo(ctx)
+	if !ok {
+		return raw.ErrRepoNotFound
+	}
+	c := repo2.DB(raw.UserDB).C(raw.UserInfoC)
+	if err := c.Find(&bson.M{"uuid": auth.ID}).One(user); err != nil {
+		return raw.ErrRepoError
+	}
+	if token, err := common.BuildUserJWT(user).Sign(jwtTerm); err == nil {
 		res.Token = token
 		return nil
 	}
@@ -67,12 +77,27 @@ func (s *User) Register(ctx context.Context, req *proto.UserAuth, res *proto.Use
 				UserAuth: req,
 			}
 			if err = repo.Create(u).Error; err == nil {
-				// TODO: 初始化用户信息
-				if token, err := buildUserJWT(nil).sign(jwtTerm); err == nil {
-					res.Token = token
-					return nil
+				repo, ok := common.GetMongoRepo(ctx)
+				if !ok {
+					tx.Rollback()
+					return raw.ErrRepoNotFound
 				}
-				return raw.ErrSignJWT
+				user := &proto.UserInfo{
+					UUID:     u.ID,
+					Nickname: "user-" + u.ID,
+					Avatar:   "",
+					Motto:    "",
+					Phone:    "",
+					Email:    "",
+					Homepage: "",
+				}
+				if err := repo.DB(raw.UserDB).C(raw.UserInfoC).Insert(user); err == nil {
+					if token, err := common.BuildUserJWT(user).Sign(jwtTerm); err == nil {
+						res.Token = token
+						return nil
+					}
+					return raw.ErrSignJWT
+				}
 			}
 			tx.Rollback()
 		}
@@ -81,13 +106,21 @@ func (s *User) Register(ctx context.Context, req *proto.UserAuth, res *proto.Use
 	return raw.ErrUserHasExist
 }
 
-// Logout Action
-func (s *User) Logout(context.Context, *proto.UserToken, *proto.UserToken) error {
-	return nil
-}
-
 // Info Action
-func (s *User) Info(context.Context, *proto.UserToken, *proto.UserToken) error {
+// TODO: 区分 Info(from db) & Check(from jwt)
+func (s *User) Info(ctx context.Context, req *proto.UserToken, res *proto.UserToken) error {
+	token, err := common.ValidUserJWT(req.Token)
+	if err != nil {
+		return err
+	}
+	Token, err := common.FreshJWT(token, jwtFresh, jwtTerm)
+	if err != nil {
+		return err
+	}
+	if Token != "" {
+		res.Token = Token
+	}
+	res.User = token.UserInfo
 	return nil
 }
 

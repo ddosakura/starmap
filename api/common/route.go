@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/ddosakura/starmap/api/auth/raw"
+	auth "github.com/ddosakura/starmap/srv/auth/proto"
 	api "github.com/micro/go-api/proto"
 	"github.com/micro/go-micro/errors"
 )
@@ -22,10 +23,14 @@ func Pair2Str(pair *api.Pair) (v string, ok bool) {
 
 // RESTful API
 type RESTful struct {
+	Ctx    context.Context
 	Req    *api.Request
 	Res    *api.Response
 	Rest   RESTfulType
 	Params map[string]*api.Pair
+
+	AuthUserClient auth.UserService
+	Token          *auth.UserToken
 
 	final bool
 	err   error
@@ -59,6 +64,7 @@ var (
 // REST Builder
 func REST(ctx context.Context, req *api.Request, res *api.Response) *RESTful {
 	s := &RESTful{
+		Ctx:  ctx,
 		Req:  req,
 		Res:  res,
 		Rest: RESTfulTypeDict[req.Method],
@@ -74,6 +80,33 @@ func REST(ctx context.Context, req *api.Request, res *api.Response) *RESTful {
 	return s
 }
 
+// LoadAuthService for RESTful
+func (s *RESTful) LoadAuthService(loader func(ctx context.Context) (auth.UserService, bool)) *RESTful {
+	AuthUserClient, ok := loader(s.Ctx)
+	if !ok {
+		s.final = true
+		s.err = errors.InternalServerError("starmap.api", "auth client not found")
+	}
+	s.AuthUserClient = AuthUserClient
+
+	return s
+}
+
+// CheckJWT for RESTful
+func (s *RESTful) CheckJWT() *RESTful {
+	Token := GetJWT(s.Req)
+	token, err := s.AuthUserClient.Info(s.Ctx, &auth.UserToken{
+		Token: Token,
+	})
+	if err != nil {
+		s.final = true
+		s.err = CleanErrResponse(raw.SrvName, err, errors.BadRequest)
+	}
+	s.Token = token
+	s.FreshJWT(token.Token)
+	return s
+}
+
 // ACTION for RESTful
 func (s *RESTful) ACTION(t RESTfulType) Action {
 	if s.final || s.Rest&t == 0 {
@@ -82,6 +115,11 @@ func (s *RESTful) ACTION(t RESTfulType) Action {
 
 	s.final = true
 	return &DoAction{s, false}
+}
+
+// FreshJWT for RESTful
+func (s *RESTful) FreshJWT(jwt string) {
+	SetJWT(s.Res, jwt)
 }
 
 // Final of RESTful
