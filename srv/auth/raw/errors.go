@@ -15,4 +15,6 @@ var (
 
 	ErrInvalidJWT = errors.New("jwt invalid")
 	ErrSignJWT    = errors.New("jwt sign error")
+
+	ErrNotUpdate = errors.New("can't update")
 )

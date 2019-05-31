@@ -9,6 +9,7 @@ import (
 	"github.com/ddosakura/starmap/srv/auth/raw"
 	"github.com/ddosakura/starmap/srv/common"
 	"github.com/jinzhu/gorm"
+	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -66,6 +67,12 @@ func (s *User) Register(ctx context.Context, req *proto.UserAuth, res *proto.Use
 	//defer repo.Unlock()
 	tx := repo.Begin()
 	defer tx.Commit()
+	defer func() {
+		e := recover()
+		if e != nil {
+			tx.Rollback()
+		}
+	}()
 
 	// fmt.Println("start")
 
@@ -146,8 +153,68 @@ func (s *User) Check(ctx context.Context, req *proto.UserToken, res *proto.UserT
 }
 
 // Change Action
-func (s *User) Change(context.Context, *proto.UserToken, *proto.UserToken) error {
-	return nil
+func (s *User) Change(ctx context.Context, req *proto.UserToken, res *proto.UserToken) error {
+	if req.Auth == nil {
+		repo, ok := common.GetMongoRepo(ctx)
+		if !ok {
+			return raw.ErrRepoNotFound
+		}
+		return s.changeUserInfo(ctx, repo, req, res)
+	}
+	repo, ok := common.GetGormRepo(ctx)
+	if !ok {
+		return raw.ErrRepoNotFound
+	}
+	return s.changePass(ctx, repo, req, res)
+}
+
+func (s *User) changePass(ctx context.Context, repo *gorm.DB, req *proto.UserToken, res *proto.UserToken) error {
+	// TODO: check error
+	u := models.UserAuth{
+		Model:    new(common.Model),
+		UserAuth: req.Auth,
+	}
+	return repo.UpdateColumns(u).Error
+}
+
+func checkData(data bson.M, k, v string) bson.M {
+	if v != "" {
+		data[k] = v
+	}
+	return data
+}
+
+func (s *User) changeUserInfo(ctx context.Context, repo *mgo.Session, req *proto.UserToken, res *proto.UserToken) error {
+	data := bson.M{}
+	checkData(data, "nickname", req.User.Nickname)
+	checkData(data, "avatar", req.User.Avatar)
+	checkData(data, "motto", req.User.Motto)
+	checkData(data, "phone", req.User.Phone)
+	checkData(data, "email", req.User.Email)
+	checkData(data, "homepage", req.User.Homepage)
+	// pretty.Println(req.User, data)
+	if len(data) == 0 {
+		return raw.ErrNotUpdate
+	}
+
+	user := &proto.UserInfo{}
+	c := repo.DB(raw.UserDB).C(raw.UserInfoC)
+	info, err := c.Find(bson.M{
+		"uuid": req.User.UUID,
+	}).Apply(mgo.Change{
+		Update:    bson.M{"$set": data},
+		ReturnNew: true,
+	}, user)
+	// pretty.Println(err, info)
+	if err != nil || info.Updated == 0 {
+		return raw.ErrRepoError
+	}
+
+	if token, err := common.BuildUserJWT(user).Sign(jwtTerm); err == nil {
+		res.Token = token
+		return nil
+	}
+	return raw.ErrSignJWT
 }
 
 // Insert Action

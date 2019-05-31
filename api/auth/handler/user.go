@@ -78,7 +78,7 @@ func (u *User) Info(ctx context.Context, req *api.Request, res *api.Response) er
 		Final()
 }
 
-// Update API
+// Update API change pass or userinfo
 func (u *User) Update(ctx context.Context, req *api.Request, res *api.Response) error {
 	return common.
 		REST(ctx, req, res).
@@ -93,18 +93,22 @@ func (u *User) Update(ctx context.Context, req *api.Request, res *api.Response) 
 		Check("email", false, []string{""}).
 		Check("homepage", false, []string{""}).
 		Do(func(s *common.RESTful) (interface{}, error) {
-			user := &auth.UserToken{
-				Auth: &auth.UserAuth{
-					Password: s.Params["pass"].Values[0],
-				},
-				User: &auth.UserInfo{
+			user := &auth.UserToken{}
+			if s.Params["pass"].Values[0] == "" {
+				user.User = &auth.UserInfo{
+					UUID:     s.Token.User.UUID,
 					Nickname: s.Params["nickname"].Values[0],
 					Avatar:   s.Params["avatar"].Values[0],
 					Motto:    s.Params["motto"].Values[0],
 					Phone:    s.Params["phone"].Values[0],
 					Email:    s.Params["email"].Values[0],
 					Homepage: s.Params["homepage"].Values[0],
-				},
+				}
+			} else {
+				user.Auth = &auth.UserAuth{
+					ID:       s.Token.User.UUID,
+					Password: s.Params["pass"].Values[0],
+				}
 			}
 			user, err := s.AuthUserClient.Change(ctx, user)
 			if err != nil {

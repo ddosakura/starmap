@@ -53,6 +53,9 @@ func FreshJWT(t *UserJWT, freshD time.Duration, termD time.Duration) (string, er
 
 // ValidUserJWT for UserInfo
 func ValidUserJWT(tokenStr string) (t *UserJWT, e error) {
+	if tokenStr == "" {
+		return nil, raw.ErrInvalidJWT
+	}
 	token, err := jwt.ParseWithClaims(tokenStr, &UserJWT{}, func(token *jwt.Token) (interface{}, error) {
 		return ENV.KeyJWT(), nil
 	})

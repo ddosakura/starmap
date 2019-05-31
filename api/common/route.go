@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/ddosakura/starmap/api/auth/raw"
 	auth "github.com/ddosakura/starmap/srv/auth/proto"
 	api "github.com/micro/go-api/proto"
 	"github.com/micro/go-micro/errors"
@@ -100,10 +99,11 @@ func (s *RESTful) CheckJWT() *RESTful {
 	})
 	if err != nil {
 		s.final = true
-		s.err = CleanErrResponse(raw.SrvName, err, errors.BadRequest)
+		s.err = CleanErrResponse("starmap.api", err, errors.BadRequest)
+	} else {
+		s.Token = token
+		s.FreshJWT(token.Token)
 	}
-	s.Token = token
-	s.FreshJWT(token.Token)
 	return s
 }
 
@@ -125,9 +125,9 @@ func (s *RESTful) FreshJWT(jwt string) {
 // Final of RESTful
 func (s *RESTful) Final() error {
 	if !s.final {
-		return errors.MethodNotAllowed(raw.SrvName, "%v is not allowed", s.Req.Method)
+		return errors.MethodNotAllowed("starmap.api", "%v is not allowed", s.Req.Method)
 	}
-	return s.err
+	return CleanErrResponse("starmap.api", s.err, errors.BadRequest)
 }
 
 // Action for RESTful
@@ -162,15 +162,20 @@ func (a *DoAction) Check(k string, multi bool, defautlV []string) Action {
 	if pair == nil || len(pair.Values) == 0 {
 		if defautlV == nil {
 			a.stop = true
-			a.s.err = errors.BadRequest(raw.SrvName, "need param `%s`", k)
+			a.s.err = errors.BadRequest("starmap.api", "need param `%s`", k)
 		} else {
-			a.s.Params[k].Values = defautlV
+			if a.s.Params == nil || len(a.s.Params) == 0 {
+				a.s.Params = make(map[string]*api.Pair)
+			}
+			a.s.Params[k] = &api.Pair{
+				Values: defautlV,
+			}
 		}
 		return a
 	}
 	if multi && len(pair.Values) < 1 {
 		a.stop = true
-		a.s.err = errors.BadRequest(raw.SrvName, "param `%s` need multi-value", k)
+		a.s.err = errors.BadRequest("starmap.api", "param `%s` need multi-value", k)
 		return a
 	}
 	return a
