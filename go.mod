@@ -3,6 +3,7 @@ module github.com/ddosakura/starmap
 go 1.12
 
 require (
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-log/log v0.1.0
 	github.com/golang/protobuf v1.3.1
 	github.com/jinzhu/gorm v1.9.8

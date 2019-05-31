@@ -2,13 +2,18 @@ package handler
 
 import (
 	"context"
-	"fmt"
+	"time"
 
 	"github.com/ddosakura/starmap/srv/auth/models"
 	proto "github.com/ddosakura/starmap/srv/auth/proto"
 	"github.com/ddosakura/starmap/srv/auth/raw"
 	"github.com/ddosakura/starmap/srv/common"
 	"github.com/jinzhu/gorm"
+)
+
+const (
+	// TODO: 考虑过期时间
+	jwtTerm = time.Hour * 24
 )
 
 // User Handler
@@ -18,20 +23,23 @@ type User struct{}
 func (s *User) Login(ctx context.Context, req *proto.UserAuth, res *proto.UserToken) error {
 	repo, ok := common.GetGormRepo(ctx)
 	if !ok {
-		res = nil
 		return raw.ErrRepoNotFound
 	}
 
 	auth := new(proto.UserAuth)
 	if err := s.findUser(repo, req.Username, auth); err != nil {
-		res = nil
 		return raw.ErrUserNotExist
 	}
 	if auth.Password != req.Password {
-		res = nil
 		return raw.ErrPassWrong
 	}
-	return nil
+
+	// TODO: 获取用户信息
+	if token, err := buildUserJWT(nil).sign(jwtTerm); err == nil {
+		res.Token = token
+		return nil
+	}
+	return raw.ErrSignJWT
 }
 
 func (s *User) findUser(repo *gorm.DB, name string, user *proto.UserAuth) error {
@@ -42,7 +50,6 @@ func (s *User) findUser(repo *gorm.DB, name string, user *proto.UserAuth) error 
 func (s *User) Register(ctx context.Context, req *proto.UserAuth, res *proto.UserToken) error {
 	repo, ok := common.GetGormRepo(ctx)
 	if !ok {
-		res = nil
 		return raw.ErrRepoNotFound
 	}
 	//repo.Lock()
@@ -50,17 +57,22 @@ func (s *User) Register(ctx context.Context, req *proto.UserAuth, res *proto.Use
 	tx := repo.Begin()
 	defer tx.Commit()
 
-	fmt.Println("start")
+	// fmt.Println("start")
 
 	auth := new(proto.UserAuth)
 	if err := s.findUser(repo, req.Username, auth); err != nil {
 		if err == gorm.ErrRecordNotFound {
-			u := models.UserInfo{
+			u := models.UserAuth{
 				Model:    new(common.Model),
 				UserAuth: req,
 			}
 			if err = repo.Create(u).Error; err == nil {
-				return nil
+				// TODO: 初始化用户信息
+				if token, err := buildUserJWT(nil).sign(jwtTerm); err == nil {
+					res.Token = token
+					return nil
+				}
+				return raw.ErrSignJWT
 			}
 			tx.Rollback()
 		}

@@ -28,14 +28,14 @@ func (u *User) Login(ctx context.Context, req *api.Request, res *api.Response) e
 		Check("user", false, nil).
 		Check("pass", false, nil).
 		Do(func(s *common.RESTful) (interface{}, error) {
-			userInfo, err := authUserClient.Login(ctx, &auth.UserInfo{
+			userToken, err := authUserClient.Login(ctx, &auth.UserAuth{
 				Username: s.Params["user"].Values[0],
 				Password: s.Params["pass"].Values[0],
 			})
 			if err != nil {
 				return nil, errors.BadRequest(raw.SrvName, err.Error())
 			}
-			return userInfo, nil
+			return userToken, nil
 		}).
 		Final()
 }
@@ -53,14 +53,14 @@ func (u *User) Register(ctx context.Context, req *api.Request, res *api.Response
 		Check("user", false, nil).
 		Check("pass", false, nil).
 		Do(func(s *common.RESTful) (interface{}, error) {
-			_, err := authUserClient.Register(ctx, &auth.UserInfo{
+			userToken, err := authUserClient.Register(ctx, &auth.UserAuth{
 				Username: s.Params["user"].Values[0],
 				Password: s.Params["pass"].Values[0],
 			})
 			if err != nil {
 				return nil, errors.BadRequest(raw.SrvName, err.Error())
 			}
-			return nil, nil
+			return userToken, nil
 		}).
 		Final()
 }

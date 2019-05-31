@@ -40,7 +40,7 @@ func main() {
 	}
 	defer repo.Close()
 	repo.AutoMigrate(
-		&models.UserInfo{},
+		&models.UserAuth{},
 		&models.RoleInfo{},
 		&models.PermissionInfo{},
 		&models.UserRole{},

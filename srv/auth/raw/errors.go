@@ -12,4 +12,7 @@ var (
 	ErrUserNotExist = errors.New("user not exist")
 	ErrUserHasExist = errors.New("user has exist")
 	ErrPassWrong    = errors.New("pass wrong")
+
+	ErrInvalidJWT = errors.New("jwt invalid")
+	ErrSignJWT    = errors.New("jwt sign error")
 )

@@ -20,6 +20,14 @@ type config struct {
 			DB   string `env:"DB" default:"starmap"`
 		} `env:"MYSQL"`
 	} `env:"REPO"`
+	Key struct {
+		// JWT string `env:"JWT" require:"true"`
+		JWT string `env:"JWT" default:"starmap"`
+	} `env:"KEY"`
+}
+
+func (c *config) KeyJWT() []byte {
+	return []byte(c.Key.JWT)
 }
 
 // config(s)

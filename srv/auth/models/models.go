@@ -5,8 +5,8 @@ import (
 	"github.com/ddosakura/starmap/srv/common"
 )
 
-// UserInfo Model
-type UserInfo struct {
+// UserAuth Model
+type UserAuth struct {
 	*common.Model
 	*proto.UserAuth
 }
