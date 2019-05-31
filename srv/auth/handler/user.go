@@ -169,12 +169,10 @@ func (s *User) Change(ctx context.Context, req *proto.UserToken, res *proto.User
 }
 
 func (s *User) changePass(ctx context.Context, repo *gorm.DB, req *proto.UserToken, res *proto.UserToken) error {
-	// TODO: check error
-	u := models.UserAuth{
-		Model:    new(common.Model),
-		UserAuth: req.Auth,
-	}
-	return repo.UpdateColumns(u).Error
+	return repo.
+		First(new(proto.UserAuth), "id = ?", req.Auth.ID).
+		Update("password", req.Auth.Password).
+		Error
 }
 
 func checkData(data bson.M, k, v string) bson.M {
