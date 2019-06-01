@@ -130,6 +130,7 @@ func (s *User) Info(ctx context.Context, req *proto.UserToken, res *proto.UserTo
 	}
 	if token, err := common.BuildUserJWT(user).Sign(jwtTerm); err == nil {
 		res.Token = token
+		res.User = user
 		return nil
 	}
 	return raw.ErrSignJWT
@@ -210,6 +211,7 @@ func (s *User) changeUserInfo(ctx context.Context, repo *mgo.Session, req *proto
 
 	if token, err := common.BuildUserJWT(user).Sign(jwtTerm); err == nil {
 		res.Token = token
+		res.User = user
 		return nil
 	}
 	return raw.ErrSignJWT

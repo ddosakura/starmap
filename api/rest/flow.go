@@ -5,6 +5,7 @@ import (
 
 	auth "github.com/ddosakura/starmap/srv/auth/proto"
 	api "github.com/micro/go-api/proto"
+	"github.com/micro/go-micro/errors"
 )
 
 // Flow for RESTful API
@@ -23,9 +24,10 @@ type Flow struct {
 	Permissions    []string
 
 	// other
-	f     *Flow
-	final bool
-	err   error
+	ctxForMiddle context.Context
+	f            *Flow
+	final        bool
+	err          error
 }
 
 // Action for Flow
@@ -46,8 +48,9 @@ func (s *Flow) Action(t RESTfulType) RESTful {
 		Roles:          s.Roles,
 		Permissions:    s.Permissions,
 
-		f:     s,
-		final: false,
+		ctxForMiddle: s.ctxForMiddle,
+		f:            s,
+		final:        false,
 	}
 }
 
@@ -56,7 +59,7 @@ func (s *Flow) Chain(fn Middleware) RESTful {
 	if s.final {
 		return s
 	}
-	e := fn(s)
+	e := fn(s.ctxForMiddle, s)
 	if e != nil {
 		s.final = true
 		s.err = e
@@ -81,5 +84,8 @@ func (s *Flow) Done() RESTful {
 
 // Final Flow
 func (s *Flow) Final() error {
+	if !s.final {
+		return errors.MethodNotAllowed(SrvName, "%v is not allowed", s.Req.Method)
+	}
 	return s.err
 }

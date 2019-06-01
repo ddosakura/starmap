@@ -6,6 +6,7 @@ import (
 	"github.com/ddosakura/starmap/api/auth/client"
 	"github.com/ddosakura/starmap/api/auth/raw"
 	"github.com/ddosakura/starmap/api/common"
+	"github.com/ddosakura/starmap/api/rest"
 	auth "github.com/ddosakura/starmap/srv/auth/proto"
 	api "github.com/micro/go-api/proto"
 	"github.com/micro/go-micro/errors"
@@ -17,83 +18,97 @@ type User struct {
 
 // Login API
 func (*User) Login(ctx context.Context, req *api.Request, res *api.Response) error {
-	return common.
-		REST(ctx, req, res).
-		LoadAuthService(client.AuthUserFromContext).
-		ACTION(common.POST|common.GET).
-		Check("user", false, nil).
-		Check("pass", false, nil).
-		Do(func(s *common.RESTful) (interface{}, error) {
+	return rest.REST(ctx, req, res).
+		Chain(rest.LoadAuthService(client.AuthUserFromContext)).
+		// API
+		Action(rest.POST | rest.GET).
+		Chain(rest.ParamCheck(map[string]*rest.PCC{
+			"user": &rest.PCC{Must: true},
+			"pass": &rest.PCC{Must: true},
+		})).
+		Chain(func(ctx context.Context, s *rest.Flow) error {
 			userToken, err := s.AuthUserClient.Login(ctx, &auth.UserAuth{
 				Username: s.Params["user"].Values[0],
 				Password: s.Params["pass"].Values[0],
 			})
 			if err != nil {
-				return nil, common.CleanErrResponse(raw.SrvName, err, errors.BadRequest)
+				return rest.CleanErrResponse(raw.SrvName, err, errors.InternalServerError)
 			}
 			s.FreshJWT(userToken.Token)
-			return userToken, nil
+			return s.Success(userToken)
 		}).
+		Done().
+		// Finsh
 		Final()
 }
 
 // Register API
 func (*User) Register(ctx context.Context, req *api.Request, res *api.Response) error {
-	return common.
-		REST(ctx, req, res).
-		LoadAuthService(client.AuthUserFromContext).
-		ACTION(common.POST|common.GET).
-		Check("user", false, nil).
-		Check("pass", false, nil).
-		Do(func(s *common.RESTful) (interface{}, error) {
+	return rest.REST(ctx, req, res).
+		Chain(rest.LoadAuthService(client.AuthUserFromContext)).
+		// API
+		Action(rest.POST | rest.GET).
+		Chain(rest.ParamCheck(rest.PCCS{
+			"user": &rest.PCC{Must: true},
+			"pass": &rest.PCC{Must: true},
+		})).
+		Chain(func(ctx context.Context, s *rest.Flow) error {
 			userToken, err := s.AuthUserClient.Register(ctx, &auth.UserAuth{
 				Username: s.Params["user"].Values[0],
 				Password: s.Params["pass"].Values[0],
 			})
 			if err != nil {
-				return nil, common.CleanErrResponse(raw.SrvName, err, errors.BadRequest)
+				return rest.CleanErrResponse(raw.SrvName, err, errors.InternalServerError)
 			}
 			s.FreshJWT(userToken.Token)
-			return userToken, nil
+			return s.Success(userToken)
 		}).
+		Done().
+		// Finsh
 		Final()
 }
 
 // Info API
 func (*User) Info(ctx context.Context, req *api.Request, res *api.Response) error {
-	return common.
-		REST(ctx, req, res).
-		LoadAuthService(client.AuthUserFromContext).
-		ACTION(common.POST | common.GET).
-		Do(func(s *common.RESTful) (interface{}, error) {
-			user, err := s.AuthUserClient.Check(s.Ctx, &auth.UserToken{
+	return rest.REST(ctx, req, res).
+		Chain(rest.LoadAuthService(client.AuthUserFromContext)).
+		// API
+		Action(rest.POST | rest.GET).
+		Chain(func(ctx context.Context, s *rest.Flow) error {
+			// didn't JWTCheck, beack Info API will also check it
+			user, err := s.AuthUserClient.Info(s.Ctx, &auth.UserToken{
 				Token: common.GetJWT(s.Req),
 			})
 			if err != nil {
-				return nil, err
+				return rest.CleanErrResponse(raw.SrvName, err, errors.InternalServerError)
 			}
 			s.FreshJWT(user.Token)
-			return user.User, nil
+			return s.Success(user.User)
 		}).
+		Done().
+		// Finsh
 		Final()
 }
 
 // Update API change pass or userinfo
 func (*User) Update(ctx context.Context, req *api.Request, res *api.Response) error {
-	return common.
-		REST(ctx, req, res).
-		LoadAuthService(client.AuthUserFromContext).
-		CheckJWT().
-		ACTION(common.POST|common.GET).
-		Check("pass", false, []string{""}).
-		Check("nickname", false, []string{""}).
-		Check("avatar", false, []string{""}).
-		Check("motto", false, []string{""}).
-		Check("phone", false, []string{""}).
-		Check("email", false, []string{""}).
-		Check("homepage", false, []string{""}).
-		Do(func(s *common.RESTful) (interface{}, error) {
+	return rest.REST(ctx, req, res).
+		Chain(rest.LoadAuthService(client.AuthUserFromContext)).
+		Chain(rest.JWTCheck()).
+		// API
+		Action(rest.POST | rest.GET).
+		Chain(rest.ParamCheck(rest.PCCS{
+			"pass":     rest.PccEmptyStr,
+			"nickname": rest.PccEmptyStr,
+			"avatar":   rest.PccEmptyStr,
+			"motto":    rest.PccEmptyStr,
+			"phone":    rest.PccEmptyStr,
+			"email":    rest.PccEmptyStr,
+			"homepage": rest.PccEmptyStr,
+		})).
+		Chain(func(ctx context.Context, s *rest.Flow) error {
 			user := &auth.UserToken{}
+			// pretty.Println(s.Params)
 			if s.Params["pass"].Values[0] == "" {
 				user.User = &auth.UserInfo{
 					UUID:     s.Token.User.UUID,
@@ -112,11 +127,13 @@ func (*User) Update(ctx context.Context, req *api.Request, res *api.Response) er
 			}
 			user, err := s.AuthUserClient.Change(ctx, user)
 			if err != nil {
-				return nil, err
+				return rest.CleanErrResponse(raw.SrvName, err, errors.InternalServerError)
 			}
 			s.FreshJWT(user.Token)
-			return user.User, nil
+			return s.Success(user.User)
 		}).
+		Done().
+		// Finsh
 		Final()
 }
 

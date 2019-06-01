@@ -10,7 +10,7 @@ import (
 
 // LoadAuthService Wrapper
 func LoadAuthService(loader func(ctx context.Context) (auth.UserService, bool)) Middleware {
-	return func(s *Flow) error {
+	return func(ctx context.Context, s *Flow) error {
 		AuthUserClient, ok := loader(s.Ctx)
 		if !ok {
 			return errors.InternalServerError(SrvName, "auth client not found")
@@ -22,7 +22,7 @@ func LoadAuthService(loader func(ctx context.Context) (auth.UserService, bool)) 
 
 // JWTCheck Wrapper
 func JWTCheck() Middleware {
-	return func(s *Flow) error {
+	return func(ctx context.Context, s *Flow) error {
 		Token := GetJWT(s.Req)
 		token, err := s.AuthUserClient.Check(s.Ctx, &auth.UserToken{
 			Token: Token,
@@ -31,29 +31,46 @@ func JWTCheck() Middleware {
 			return CleanErrResponse(SrvName, err, errors.Forbidden)
 		}
 		s.Token = token
-		SetJWT(s.Res, token.Token)
+		s.FreshJWT(token.Token)
 		return nil
 	}
 }
 
+// PCC - ParamCheck Config
+type PCC struct {
+	Must     bool
+	Multi    bool
+	DefaultV []string
+}
+
+// PCCS - PCC Group
+type PCCS map[string]*PCC
+
+// PCC in common use
+var (
+	PccEmptyStr = &PCC{DefaultV: []string{""}}
+)
+
 // ParamCheck Wrapper
-func ParamCheck(k string, multi bool, defautlV []string) Middleware {
-	return func(s *Flow) error {
-		pair := s.Params[k]
-		if pair == nil || len(pair.Values) == 0 {
-			if defautlV == nil {
-				return errors.BadRequest(SrvName, "need param `%s`", k)
+func ParamCheck(pccs PCCS) Middleware {
+	return func(ctx context.Context, s *Flow) error {
+		for k, pcc := range pccs {
+			pair := s.Params[k]
+			if pair == nil || len(pair.Values) == 0 {
+				if pcc.Must || pcc.Multi {
+					return errors.BadRequest(SrvName, "need param `%s`", k)
+				}
+				if s.Params == nil || len(s.Params) == 0 {
+					s.Params = make(map[string]*api.Pair)
+				}
+				s.Params[k] = &api.Pair{
+					Values: pcc.DefaultV,
+				}
+				continue
 			}
-			if s.Params == nil || len(s.Params) == 0 {
-				s.Params = make(map[string]*api.Pair)
+			if pcc.Multi && len(pair.Values) < 1 {
+				return errors.BadRequest(SrvName, "param `%s` need multi-value", k)
 			}
-			s.Params[k] = &api.Pair{
-				Values: defautlV,
-			}
-			return nil
-		}
-		if multi && len(pair.Values) < 1 {
-			return errors.BadRequest(SrvName, "param `%s` need multi-value", k)
 		}
 		return nil
 	}
@@ -70,7 +87,7 @@ const (
 
 // RoleCheck Wrapper
 func RoleCheck(rules []string, logical Logical) Middleware {
-	return func(s *Flow) error {
+	return func(ctx context.Context, s *Flow) error {
 		if s.Roles == nil {
 			result, err := s.AuthUserClient.Roles(s.Ctx, &auth.None{})
 			if err != nil {
@@ -88,7 +105,7 @@ func RoleCheck(rules []string, logical Logical) Middleware {
 
 // PermissionCheck Wrapper
 func PermissionCheck(rules []string, logical Logical) Middleware {
-	return func(s *Flow) error {
+	return func(ctx context.Context, s *Flow) error {
 		if s.Permissions == nil {
 			result, err := s.AuthUserClient.Permissions(s.Ctx, &auth.None{})
 			if err != nil {

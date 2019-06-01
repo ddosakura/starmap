@@ -1,9 +1,12 @@
 package rest
 
-import "encoding/json"
+import (
+	"context"
+	"encoding/json"
+)
 
 // Middleware for RESTful
-type Middleware func(*Flow) error // if it returns a error, flow will finish
+type Middleware func(context.Context, *Flow) error // if it returns a error, flow will finish
 
 // --- APIs ---
 
@@ -30,4 +33,9 @@ func (s *Flow) Success(d interface{}) error {
 		s.Res.Body = string(b)
 	}
 	return s.err
+}
+
+// FreshJWT API
+func (s *Flow) FreshJWT(jwt string) {
+	SetJWT(s.Res, jwt)
 }

@@ -9,7 +9,7 @@ import (
 )
 
 func Example() {
-	handle := func(s *Flow) error {
+	handle := func(ctx context.Context, s *Flow) error {
 		fmt.Println("M", s.Rest)
 		return s.Success(fmt.Sprintf("M %v", s.Rest))
 	}

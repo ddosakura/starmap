@@ -53,7 +53,8 @@ func REST(ctx context.Context, req *api.Request, res *api.Response) RESTful {
 		Res:  res,
 		Rest: RESTfulTypeDict[req.Method],
 
-		final: false,
+		ctxForMiddle: context.Background(),
+		final:        false,
 	}
 	switch s.Rest {
 	case GET, DELETE:
