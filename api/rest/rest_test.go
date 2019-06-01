@@ -21,22 +21,22 @@ func Example() {
 			Chain(RoleCheck([]string{"admin"}, LogicalAND)).
 			// API
 			Action(POST).
-			Chain(PermissionCheck([]string{"user:insert"}, LogicalAND)).
+			Chain(PermCheck([]string{"user:insert"}, LogicalAND)).
 			Chain(handle).
 			Done().
 			// API
 			Action(DELETE).
-			Chain(PermissionCheck([]string{"user:delete"}, LogicalAND)).
+			Chain(PermCheck([]string{"user:delete"}, LogicalAND)).
 			Chain(handle).
 			Done().
 			// API
 			Action(GET).
-			Chain(PermissionCheck([]string{"user:select"}, LogicalAND)).
+			Chain(PermCheck([]string{"user:select"}, LogicalAND)).
 			Chain(handle).
 			Done().
 			// API
 			Action(PUT).
-			Chain(PermissionCheck([]string{"user:update"}, LogicalAND)).
+			Chain(PermCheck([]string{"user:update"}, LogicalAND)).
 			Chain(handle).
 			Done().
 			// Finsh
