@@ -30,6 +30,8 @@ type RESTful struct {
 
 	AuthUserClient auth.UserService
 	Token          *auth.UserToken
+	Roles          []string
+	Permissions    []string
 
 	final bool
 	err   error
@@ -83,8 +85,7 @@ func REST(ctx context.Context, req *api.Request, res *api.Response) *RESTful {
 func (s *RESTful) LoadAuthService(loader func(ctx context.Context) (auth.UserService, bool)) *RESTful {
 	AuthUserClient, ok := loader(s.Ctx)
 	if !ok {
-		s.final = true
-		s.err = errors.InternalServerError("starmap.api", "auth client not found")
+		return s.Forbid(errors.InternalServerError(SrvName, "auth client not found"))
 	}
 	s.AuthUserClient = AuthUserClient
 
@@ -98,13 +99,42 @@ func (s *RESTful) CheckJWT() *RESTful {
 		Token: Token,
 	})
 	if err != nil {
-		s.final = true
-		s.err = CleanErrResponse("starmap.api", err, errors.BadRequest)
-	} else {
-		s.Token = token
-		s.FreshJWT(token.Token)
+		return s.Forbid(CleanErrResponse(SrvName, err, errors.Forbidden))
 	}
+	s.Token = token
+	s.FreshJWT(token.Token)
 	return s
+}
+
+// GetRoles with cache
+func (s *RESTful) GetRoles() ([]string, error) {
+	if s.Roles == nil {
+		result, err := s.AuthUserClient.Roles(s.Ctx, &auth.None{})
+		if err != nil {
+			return nil, err
+		}
+		s.Roles = result.Data
+	}
+	return s.Roles, nil
+}
+
+// GetPermissions with cache
+func (s *RESTful) GetPermissions() ([]string, error) {
+	//result, err := s.AuthUserClient.Permissions(s.Ctx, &auth.None{})
+	//return result.Data, err
+
+	// TODO: testing
+	switch s.Rest {
+	case POST:
+		return []string{"user:insert"}, nil
+	case DELETE:
+		return []string{"user:select"}, nil
+	case GET:
+		return []string{"user:update", "user:select"}, nil
+	case PUT:
+		return []string{"user:delete", "user:insert"}, nil
+	}
+	return []string{}, nil
 }
 
 // ACTION for RESTful
@@ -125,26 +155,17 @@ func (s *RESTful) FreshJWT(jwt string) {
 // Final of RESTful
 func (s *RESTful) Final() error {
 	if !s.final {
-		return errors.MethodNotAllowed("starmap.api", "%v is not allowed", s.Req.Method)
+		return errors.MethodNotAllowed(SrvName, "%v is not allowed", s.Req.Method)
 	}
-	return CleanErrResponse("starmap.api", s.err, errors.BadRequest)
+	return CleanErrResponse(SrvName, s.err, errors.BadRequest)
 }
 
 // Action for RESTful
 type Action interface {
-	Check(k string, multi bool, defautlV []string) Action
+	Role(rules []string, logical Logical) Action
+	Permission(rules []string, logical Logical) Action
+	Check(k string, multi bool, defautlV []string) Action // CheckParams
 	Do(fn func(*RESTful) (interface{}, error)) *RESTful
-}
-
-type passAction struct {
-	s *RESTful
-}
-
-func (a *passAction) Check(k string, multi bool, defautlV []string) Action {
-	return a
-}
-func (a *passAction) Do(fn func(*RESTful) (interface{}, error)) *RESTful {
-	return a.s
 }
 
 // DoAction for RESTful
@@ -161,22 +182,18 @@ func (a *DoAction) Check(k string, multi bool, defautlV []string) Action {
 	pair := a.s.Params[k]
 	if pair == nil || len(pair.Values) == 0 {
 		if defautlV == nil {
-			a.stop = true
-			a.s.err = errors.BadRequest("starmap.api", "need param `%s`", k)
-		} else {
-			if a.s.Params == nil || len(a.s.Params) == 0 {
-				a.s.Params = make(map[string]*api.Pair)
-			}
-			a.s.Params[k] = &api.Pair{
-				Values: defautlV,
-			}
+			return a.Forbid(errors.BadRequest(SrvName, "need param `%s`", k))
+		}
+		if a.s.Params == nil || len(a.s.Params) == 0 {
+			a.s.Params = make(map[string]*api.Pair)
+		}
+		a.s.Params[k] = &api.Pair{
+			Values: defautlV,
 		}
 		return a
 	}
 	if multi && len(pair.Values) < 1 {
-		a.stop = true
-		a.s.err = errors.BadRequest("starmap.api", "param `%s` need multi-value", k)
-		return a
+		return a.Forbid(errors.BadRequest(SrvName, "param `%s` need multi-value", k))
 	}
 	return a
 }

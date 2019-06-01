@@ -11,4 +11,7 @@ service User {
 
     rpc Info(go.api.Request) returns (go.api.Response) {}
     rpc Update(go.api.Request) returns (go.api.Response) {}
+
+    rpc Roles(go.api.Request) returns (go.api.Response) {}
+    rpc Permissions(go.api.Request) returns (go.api.Response) {}
 }

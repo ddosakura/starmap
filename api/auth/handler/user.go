@@ -16,7 +16,7 @@ type User struct {
 }
 
 // Login API
-func (u *User) Login(ctx context.Context, req *api.Request, res *api.Response) error {
+func (*User) Login(ctx context.Context, req *api.Request, res *api.Response) error {
 	return common.
 		REST(ctx, req, res).
 		LoadAuthService(client.AuthUserFromContext).
@@ -38,7 +38,7 @@ func (u *User) Login(ctx context.Context, req *api.Request, res *api.Response) e
 }
 
 // Register API
-func (u *User) Register(ctx context.Context, req *api.Request, res *api.Response) error {
+func (*User) Register(ctx context.Context, req *api.Request, res *api.Response) error {
 	return common.
 		REST(ctx, req, res).
 		LoadAuthService(client.AuthUserFromContext).
@@ -60,7 +60,7 @@ func (u *User) Register(ctx context.Context, req *api.Request, res *api.Response
 }
 
 // Info API
-func (u *User) Info(ctx context.Context, req *api.Request, res *api.Response) error {
+func (*User) Info(ctx context.Context, req *api.Request, res *api.Response) error {
 	return common.
 		REST(ctx, req, res).
 		LoadAuthService(client.AuthUserFromContext).
@@ -79,7 +79,7 @@ func (u *User) Info(ctx context.Context, req *api.Request, res *api.Response) er
 }
 
 // Update API change pass or userinfo
-func (u *User) Update(ctx context.Context, req *api.Request, res *api.Response) error {
+func (*User) Update(ctx context.Context, req *api.Request, res *api.Response) error {
 	return common.
 		REST(ctx, req, res).
 		LoadAuthService(client.AuthUserFromContext).
@@ -118,4 +118,14 @@ func (u *User) Update(ctx context.Context, req *api.Request, res *api.Response) 
 			return user.User, nil
 		}).
 		Final()
+}
+
+// Roles API
+func (*User) Roles(ctx context.Context, req *api.Request, res *api.Response) error {
+	return nil
+}
+
+// Permissions API
+func (*User) Permissions(ctx context.Context, req *api.Request, res *api.Response) error {
+	return nil
 }

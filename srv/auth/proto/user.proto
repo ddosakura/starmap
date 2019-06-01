@@ -18,6 +18,9 @@ service User {
     rpc Delete(UserToken) returns(UserToken) {}
     rpc Select(UserToken) returns(UserToken) {}
     rpc Update(UserToken) returns(UserToken) {}
+    
+    rpc Roles(None) returns (Result) {}
+    rpc Permissions(None) returns (Result) {}
 }
 
 message UserAuth { // save in mysql
@@ -44,3 +47,7 @@ message UserInfo { // save in mongo
 }
 
 message None {}
+
+message Result {
+    repeated string data = 1;
+}
