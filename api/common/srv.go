@@ -3,6 +3,7 @@ package common
 import (
 	"context"
 
+	"github.com/ddosakura/starmap/api/rest"
 	auth "github.com/ddosakura/starmap/srv/auth/proto"
 )
 
@@ -18,6 +19,12 @@ const (
 // SrvKey for Ctx
 type SrvKey struct {
 	Srv srv
+}
+
+// AuthServiceUserFromContext retrieves the client from the Context
+func AuthServiceUserFromContext(ctx context.Context) (rest.AuthService, bool) {
+	c, ok := ctx.Value(SrvKey{SrvAuthUser}).(auth.UserService)
+	return c, ok
 }
 
 // AuthUserFromContext retrieves the client from the Context

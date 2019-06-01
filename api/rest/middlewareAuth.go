@@ -4,14 +4,22 @@ import (
 	"context"
 
 	auth "github.com/ddosakura/starmap/srv/auth/proto"
-	"github.com/micro/go-micro/errors"
 	"github.com/kr/pretty"
+	client "github.com/micro/go-micro/client"
+	"github.com/micro/go-micro/errors"
 )
 
 // Order: LoadAuthService -> JWTCheck -> RoleCheck/PermCheck
 
+// AuthService needed to load
+type AuthService interface {
+	Check(ctx context.Context, in *auth.UserToken, opts ...client.CallOption) (*auth.UserToken, error)
+	Roles(ctx context.Context, in *auth.None, opts ...client.CallOption) (*auth.Result, error)
+	Perms(ctx context.Context, in *auth.None, opts ...client.CallOption) (*auth.Result, error)
+}
+
 // LoadAuthService Wrapper
-func LoadAuthService(loader func(ctx context.Context) (auth.UserService, bool)) Middleware {
+func LoadAuthService(loader func(ctx context.Context) (AuthService, bool)) Middleware {
 	return func(ctx context.Context, s *Flow) error {
 		AuthUserClient, ok := loader(s.Ctx)
 		if !ok {

@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/ddosakura/starmap/api/rest"
-	"github.com/ddosakura/starmap/api/sys/client"
 
 	// proto "github.com/ddosakura/starmap/api/sys/proto"
 	api "github.com/micro/go-api/proto"
@@ -18,7 +17,7 @@ type User struct{}
 func (*User) Entity(ctx context.Context, req *api.Request, res *api.Response) error {
 	// TODO: User Entity API
 	return rest.REST(ctx, req, res).
-		Chain(rest.LoadAuthService(client.AuthUserFromContext)).
+		Chain(autoLoadAuthService).
 		Chain(rest.JWTCheck()).
 		// API
 		Action(rest.POST).

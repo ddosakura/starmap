@@ -25,7 +25,7 @@ func (*User) Login(ctx context.Context, req *api.Request, res *api.Response) err
 			"pass": &rest.PCC{Must: true},
 		})).
 		Chain(func(ctx context.Context, s *rest.Flow) error {
-			userToken, err := s.AuthUserClient.Login(ctx, &auth.UserAuth{
+			userToken, err := s.AuthUserClient.(auth.UserService).Login(ctx, &auth.UserAuth{
 				Username: s.Params["user"].Values[0],
 				Password: s.Params["pass"].Values[0],
 			})
@@ -51,7 +51,7 @@ func (*User) Register(ctx context.Context, req *api.Request, res *api.Response) 
 			"pass": &rest.PCC{Must: true},
 		})).
 		Chain(func(ctx context.Context, s *rest.Flow) error {
-			userToken, err := s.AuthUserClient.Register(ctx, &auth.UserAuth{
+			userToken, err := s.AuthUserClient.(auth.UserService).Register(ctx, &auth.UserAuth{
 				Username: s.Params["user"].Values[0],
 				Password: s.Params["pass"].Values[0],
 			})
@@ -74,7 +74,7 @@ func (*User) Info(ctx context.Context, req *api.Request, res *api.Response) erro
 		Action(rest.POST | rest.GET).
 		Chain(func(ctx context.Context, s *rest.Flow) error {
 			// didn't JWTCheck, beack Info API will also check it
-			user, err := s.AuthUserClient.Info(s.Ctx, &auth.UserToken{
+			user, err := s.AuthUserClient.(auth.UserService).Info(s.Ctx, &auth.UserToken{
 				Token: rest.GetJWT(s.Req),
 			})
 			if err != nil {
@@ -122,7 +122,7 @@ func (*User) Update(ctx context.Context, req *api.Request, res *api.Response) er
 					Password: s.Params["pass"].Values[0],
 				}
 			}
-			user, err := s.AuthUserClient.Change(ctx, user)
+			user, err := s.AuthUserClient.(auth.UserService).Change(ctx, user)
 			if err != nil {
 				return rest.CleanErrResponse(raw.SrvName, err, errors.InternalServerError)
 			}

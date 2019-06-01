@@ -7,3 +7,4 @@ RESTful tools based on Middleware for micro api
 > + auth "github.com/ddosakura/starmap/srv/auth/proto" (auth service)
 > + api "github.com/micro/go-api/proto" (not common api interface)
 > + "github.com/micro/go-micro/errors"
+> + client "github.com/micro/go-micro/client"

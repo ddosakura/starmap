@@ -6,7 +6,6 @@ import (
 
 	// proto "github.com/ddosakura/starmap/api/sys/proto"
 	"github.com/ddosakura/starmap/api/rest"
-	"github.com/ddosakura/starmap/api/sys/client"
 	api "github.com/micro/go-api/proto"
 )
 
@@ -17,7 +16,7 @@ type Perm struct{}
 func (*Perm) Entity(ctx context.Context, req *api.Request, res *api.Response) error {
 	// TODO: Perm Entity API
 	return rest.REST(ctx, req, res).
-		Chain(rest.LoadAuthService(client.AuthUserFromContext)).
+		Chain(autoLoadAuthService).
 		Chain(rest.JWTCheck()).
 		// API
 		Action(rest.POST).

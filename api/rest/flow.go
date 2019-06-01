@@ -18,7 +18,7 @@ type Flow struct {
 	Params map[string]*api.Pair
 
 	// cache
-	AuthUserClient auth.UserService
+	AuthUserClient AuthService
 	Token          *auth.UserToken
 	Roles          []string
 	Perms          []string

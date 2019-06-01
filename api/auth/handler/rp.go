@@ -63,6 +63,7 @@ func (*Role) Perms(ctx context.Context, req *api.Request, res *api.Response) err
 	return rest.REST(ctx, req, res).
 		Chain(autoLoadAuthService).
 		Chain(rest.JWTCheck()).
+		// 系统管理员专用
 		Chain(rest.RoleCheck([]string{"sys"}, rest.LogicalAND)).
 		// API
 		Action(rest.POST | rest.GET).
