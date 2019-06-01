@@ -120,21 +120,14 @@ func (s *RESTful) GetRoles() ([]string, error) {
 
 // GetPermissions with cache
 func (s *RESTful) GetPermissions() ([]string, error) {
-	//result, err := s.AuthUserClient.Permissions(s.Ctx, &auth.None{})
-	//return result.Data, err
-
-	// TODO: testing
-	switch s.Rest {
-	case POST:
-		return []string{"user:insert"}, nil
-	case DELETE:
-		return []string{"user:select"}, nil
-	case GET:
-		return []string{"user:update", "user:select"}, nil
-	case PUT:
-		return []string{"user:delete", "user:insert"}, nil
+	if s.Permissions == nil {
+		result, err := s.AuthUserClient.Permissions(s.Ctx, &auth.None{})
+		if err != nil {
+			return nil, err
+		}
+		s.Permissions = result.Data
 	}
-	return []string{}, nil
+	return s.Permissions, nil
 }
 
 // ACTION for RESTful
