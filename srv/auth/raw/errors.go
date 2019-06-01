@@ -10,6 +10,7 @@ var (
 	ErrRepoError    = errors.New("repo error, please retry")
 
 	ErrUserNotExist = errors.New("user not exist")
+	ErrRoleNotExist = errors.New("role not exist")
 	ErrUserHasExist = errors.New("user has exist")
 	ErrPassWrong    = errors.New("pass wrong")
 

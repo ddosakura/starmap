@@ -17,29 +17,70 @@ func (s *User) Roles(ctx context.Context, req *proto.None, res *proto.Result) er
 	}
 
 	var roles []models.Role
-	ua := new(proto.UserAuth)
-	ua.ID = req.UUID
 	user := new(models.User)
-	user.UserAuth = ua
-	// TODO: gorm's error
-	if err := repo.Model(user).Related(&roles, "Roles").Error; err != nil {
-		return err
+	user.UserAuth = new(proto.UserAuth)
+	user.UserAuth.ID = req.UUID
+	if result := repo.Model(user).Related(&roles, "Roles"); result.Error != nil {
+		return raw.ErrRepoError
 	}
 
 	res.Data = make([]string, 0, len(roles))
 	for _, r := range roles {
-		// TODO: use roleName after
-		res.Data = append(res.Data, r.ID)
+		res.Data = append(res.Data, r.Name)
 	}
 	return nil
 }
 
-// Permissions Action
-func (s *User) Permissions(ctx context.Context, req *proto.None, res *proto.Result) error {
+// Perms Action
+func (s *User) Perms(ctx context.Context, req *proto.None, res *proto.Result) error {
+	repo, ok := common.GetGormRepo(ctx)
+	if !ok {
+		return raw.ErrRepoNotFound
+	}
+
+	var roles []models.Role
+	var perms []models.Perm
+	user := new(models.User)
+	user.UserAuth = new(proto.UserAuth)
+	user.UserAuth.ID = req.UUID
+	if result := repo.Model(user).Related(&roles, "Roles"); result.Error != nil {
+		return raw.ErrRepoError
+	}
+	if result := repo.Debug().Model(&roles).Related(&perms, "Perms"); result.Error != nil {
+		return raw.ErrRepoError
+	}
+
+	res.Data = make([]string, 0, len(perms))
+	for _, p := range perms {
+		res.Data = append(res.Data, p.Subject+":"+p.Action)
+	}
 	return nil
 }
 
-// Permissions Action
-func (s *Role) Permissions(ctx context.Context, req *proto.None, res *proto.Result) error {
+// Perms Action
+func (s *Role) Perms(ctx context.Context, req *proto.None, res *proto.Result) error {
+	repo, ok := common.GetGormRepo(ctx)
+	if !ok {
+		return raw.ErrRepoNotFound
+	}
+
+	var perms []models.Perm
+	rule := new(models.Role)
+	//rule.RoleInfo = new(proto.RoleInfo)
+	//rule.RoleInfo.Name = req.Name
+	if result := repo.Debug().First(rule, "name = ?", req.Name); result.Error != nil {
+		if result.RecordNotFound() {
+			return raw.ErrRoleNotExist
+		}
+		return raw.ErrRepoError
+	}
+	if result := repo.Debug().Model(rule).Related(&perms, "Perms"); result.Error != nil {
+		return raw.ErrRepoError
+	}
+
+	res.Data = make([]string, 0, len(perms))
+	for _, p := range perms {
+		res.Data = append(res.Data, p.Subject+":"+p.Action)
+	}
 	return nil
 }

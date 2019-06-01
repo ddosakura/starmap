@@ -21,7 +21,7 @@ type Flow struct {
 	AuthUserClient auth.UserService
 	Token          *auth.UserToken
 	Roles          []string
-	Permissions    []string
+	Perms          []string
 
 	// other
 	ctxForMiddle context.Context
@@ -46,7 +46,7 @@ func (s *Flow) Action(t RESTfulType) RESTful {
 		AuthUserClient: s.AuthUserClient,
 		Token:          s.Token,
 		Roles:          s.Roles,
-		Permissions:    s.Permissions,
+		Perms:          s.Perms,
 
 		ctxForMiddle: s.ctxForMiddle,
 		f:            s,
@@ -73,7 +73,7 @@ func (s *Flow) Done() RESTful {
 	s.f.AuthUserClient = s.AuthUserClient
 	s.f.Token = s.Token
 	s.f.Roles = s.Roles
-	s.f.Permissions = s.Permissions
+	s.f.Perms = s.Perms
 
 	if s.final {
 		s.f.final = true

@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package starmap.api.auth;
+
+import "github.com/micro/go-api/proto/api.proto";
+
+service Role {
+    rpc Perms(go.api.Request) returns (go.api.Response) {}
+}

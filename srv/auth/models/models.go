@@ -3,6 +3,7 @@ package models
 import (
 	proto "github.com/ddosakura/starmap/srv/auth/proto"
 	"github.com/ddosakura/starmap/srv/common"
+	"github.com/jinzhu/gorm"
 )
 
 // User Model (for UserAuth)
@@ -14,33 +15,15 @@ type User struct {
 
 // Role Model
 type Role struct {
-	*common.Model
+	*gorm.Model
 	*proto.RoleInfo
-	User        []*User       `gorm:"many2many:user_roles;"`
-	Permissions []*Permission `gorm:"many2many:role_permissions;"`
+	User  []*User `gorm:"many2many:user_roles;"`
+	Perms []*Perm `gorm:"many2many:role_perms;"`
 }
 
-// Permission Model
-type Permission struct {
-	*common.Model
-	*proto.PermissionInfo
-	Roles []*Role `gorm:"many2many:role_permissions;"`
+// Perm Model
+type Perm struct {
+	*gorm.Model
+	*proto.PermInfo
+	Roles []*Role `gorm:"many2many:role_perms;"`
 }
-
-//// UserRole Model
-//type UserRole struct {
-//	*common.Model
-//	ID string `gorm:"primary_key"`
-//
-//	UserID string `gorm:"foreignkey:CategoryId"`
-//	RoleID string
-//}
-//
-//// RolePermission Model
-//type RolePermission struct {
-//	*common.Model
-//	ID string `gorm:"primary_key"`
-//
-//	RoleID       string
-//	PermissionID string
-//}

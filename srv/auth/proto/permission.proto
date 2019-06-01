@@ -2,13 +2,15 @@ syntax = "proto3";
 
 package starmap.srv.auth;
 
-service Permission {
-    rpc Insert(PermissionInfo) returns(PermissionInfo) {}
-    rpc Delete(PermissionInfo) returns(PermissionInfo) {}
-    rpc Select(PermissionInfo) returns(PermissionInfo) {}
-    rpc Update(PermissionInfo) returns(PermissionInfo) {}
+service Perm {
+    rpc Insert(PermInfo) returns(PermInfo) {}
+    rpc Delete(PermInfo) returns(PermInfo) {}
+    rpc Select(PermInfo) returns(PermInfo) {}
+    rpc Update(PermInfo) returns(PermInfo) {}
 }
 
-message PermissionInfo {
-    string ID = 1;
+message PermInfo {
+    string subject = 1;
+    string action = 2;
+    string detail  = 3;
 }

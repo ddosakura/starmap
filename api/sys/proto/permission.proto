@@ -4,7 +4,7 @@ package starmap.api.sys;
 
 import "github.com/micro/go-api/proto/api.proto";
 
-service Permission {
+service Perm {
     // RESTful
     rpc Entity(go.api.Request) returns (go.api.Response) {}
 }

@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/ddosakura/starmap/srv/auth/handler"
+	"github.com/ddosakura/starmap/srv/auth/models"
 	proto "github.com/ddosakura/starmap/srv/auth/proto"
 	"github.com/ddosakura/starmap/srv/auth/raw"
-	"github.com/ddosakura/starmap/srv/auth/models"
 	"github.com/ddosakura/starmap/srv/auth/subscriber"
 	"github.com/ddosakura/starmap/srv/common"
 	"github.com/micro/go-log"
@@ -40,15 +40,9 @@ func main() {
 	}
 	defer repo.Close()
 	repo.AutoMigrate(
-		//&models.UserAuth{},
-		//&models.RoleInfo{},
-		//&models.PermissionInfo{},
 		&models.User{},
 		&models.Role{},
-		&models.Permission{},
-
-		//&models.UserRole{},
-		//&models.RolePermission{},
+		&models.Perm{},
 	)
 
 	//log.Log("DB OK!")
@@ -65,7 +59,7 @@ func main() {
 	// Register Handler
 	proto.RegisterUserHandler(service.Server(), new(handler.User))
 	proto.RegisterRoleHandler(service.Server(), new(handler.Role))
-	proto.RegisterPermissionHandler(service.Server(), new(handler.Permission))
+	proto.RegisterPermHandler(service.Server(), new(handler.Perm))
 
 	// Register Struct as Subscriber
 	micro.RegisterSubscriber("starmap.srv.auth", service.Server(), new(subscriber.User))

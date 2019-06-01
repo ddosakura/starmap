@@ -21,7 +21,7 @@ func (*Role) Entity(ctx context.Context, req *api.Request, res *api.Response) er
 		Chain(rest.JWTCheck()).
 		// API
 		Action(rest.POST).
-		Chain(rest.PermissionCheck([]string{"role:insert"}, rest.LogicalAND)).
+		Chain(rest.PermCheck([]string{"role:insert"}, rest.LogicalAND)).
 		Chain(func(ctx context.Context, s *rest.Flow) error {
 			fmt.Println("M", s.Rest)
 			return s.Success(fmt.Sprintf("M %v", s.Rest))
@@ -29,7 +29,7 @@ func (*Role) Entity(ctx context.Context, req *api.Request, res *api.Response) er
 		Done().
 		// API
 		Action(rest.DELETE).
-		Chain(rest.PermissionCheck([]string{"role:delete"}, rest.LogicalAND)).
+		Chain(rest.PermCheck([]string{"role:delete"}, rest.LogicalAND)).
 		Chain(func(ctx context.Context, s *rest.Flow) error {
 			fmt.Println("M", s.Rest)
 			return s.Success(fmt.Sprintf("M %v", s.Rest))
@@ -37,7 +37,7 @@ func (*Role) Entity(ctx context.Context, req *api.Request, res *api.Response) er
 		Done().
 		// API
 		Action(rest.GET).
-		Chain(rest.PermissionCheck([]string{"role:select"}, rest.LogicalAND)).
+		Chain(rest.PermCheck([]string{"role:select"}, rest.LogicalAND)).
 		Chain(func(ctx context.Context, s *rest.Flow) error {
 			fmt.Println("M", s.Rest)
 			return s.Success(fmt.Sprintf("M %v", s.Rest))
@@ -45,7 +45,7 @@ func (*Role) Entity(ctx context.Context, req *api.Request, res *api.Response) er
 		Done().
 		// API
 		Action(rest.PUT).
-		Chain(rest.PermissionCheck([]string{"role:update"}, rest.LogicalAND)).
+		Chain(rest.PermCheck([]string{"role:update"}, rest.LogicalAND)).
 		Chain(func(ctx context.Context, s *rest.Flow) error {
 			fmt.Println("M", s.Rest)
 			return s.Success(fmt.Sprintf("M %v", s.Rest))

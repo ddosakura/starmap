@@ -4,9 +4,11 @@ import (
 	"context"
 
 	auth "github.com/ddosakura/starmap/srv/auth/proto"
-	api "github.com/micro/go-api/proto"
 	"github.com/micro/go-micro/errors"
+	"github.com/kr/pretty"
 )
+
+// Order: LoadAuthService -> JWTCheck -> RoleCheck/PermCheck
 
 // LoadAuthService Wrapper
 func LoadAuthService(loader func(ctx context.Context) (auth.UserService, bool)) Middleware {
@@ -36,47 +38,7 @@ func JWTCheck() Middleware {
 	}
 }
 
-// PCC - ParamCheck Config
-type PCC struct {
-	Must     bool
-	Multi    bool
-	DefaultV []string
-}
-
-// PCCS - PCC Group
-type PCCS map[string]*PCC
-
-// PCC in common use
-var (
-	PccEmptyStr = &PCC{DefaultV: []string{""}}
-)
-
-// ParamCheck Wrapper
-func ParamCheck(pccs PCCS) Middleware {
-	return func(ctx context.Context, s *Flow) error {
-		for k, pcc := range pccs {
-			pair := s.Params[k]
-			if pair == nil || len(pair.Values) == 0 {
-				if pcc.Must || pcc.Multi {
-					return errors.BadRequest(SrvName, "need param `%s`", k)
-				}
-				if s.Params == nil || len(s.Params) == 0 {
-					s.Params = make(map[string]*api.Pair)
-				}
-				s.Params[k] = &api.Pair{
-					Values: pcc.DefaultV,
-				}
-				continue
-			}
-			if pcc.Multi && len(pair.Values) < 1 {
-				return errors.BadRequest(SrvName, "param `%s` need multi-value", k)
-			}
-		}
-		return nil
-	}
-}
-
-// Logical for Role & Permission
+// Logical for Role & Perm
 type Logical int
 
 // Logicals
@@ -89,7 +51,9 @@ const (
 func RoleCheck(rules []string, logical Logical) Middleware {
 	return func(ctx context.Context, s *Flow) error {
 		if s.Roles == nil {
-			result, err := s.AuthUserClient.Roles(s.Ctx, &auth.None{})
+			result, err := s.AuthUserClient.Roles(s.Ctx, &auth.None{
+				UUID: s.Token.User.UUID,
+			})
 			if err != nil {
 				return CleanErrResponse(SrvName, err, errors.Forbidden)
 			}
@@ -103,18 +67,21 @@ func RoleCheck(rules []string, logical Logical) Middleware {
 	}
 }
 
-// PermissionCheck Wrapper
-func PermissionCheck(rules []string, logical Logical) Middleware {
+// PermCheck Wrapper
+func PermCheck(rules []string, logical Logical) Middleware {
 	return func(ctx context.Context, s *Flow) error {
-		if s.Permissions == nil {
-			result, err := s.AuthUserClient.Permissions(s.Ctx, &auth.None{})
+		if s.Perms == nil {
+			result, err := s.AuthUserClient.Perms(s.Ctx, &auth.None{
+				UUID: s.Token.User.UUID,
+			})
 			if err != nil {
 				return CleanErrResponse(SrvName, err, errors.Forbidden)
 			}
-			s.Permissions = result.Data
+			s.Perms = result.Data
 		}
 
-		if e := checkRuleRP(rules, logical, s.Permissions); e != nil {
+		pretty.Println(rules, logical, s.Perms)
+		if e := checkRuleRP(rules, logical, s.Perms); e != nil {
 			return e
 		}
 		return nil

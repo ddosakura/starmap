@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 
-	"github.com/ddosakura/starmap/api/auth/client"
 	"github.com/ddosakura/starmap/api/auth/raw"
 	"github.com/ddosakura/starmap/api/rest"
 	auth "github.com/ddosakura/starmap/srv/auth/proto"
@@ -18,7 +17,7 @@ type User struct {
 // Login API
 func (*User) Login(ctx context.Context, req *api.Request, res *api.Response) error {
 	return rest.REST(ctx, req, res).
-		Chain(rest.LoadAuthService(client.AuthUserFromContext)).
+		Chain(autoLoadAuthService).
 		// API
 		Action(rest.POST | rest.GET).
 		Chain(rest.ParamCheck(map[string]*rest.PCC{
@@ -44,7 +43,7 @@ func (*User) Login(ctx context.Context, req *api.Request, res *api.Response) err
 // Register API
 func (*User) Register(ctx context.Context, req *api.Request, res *api.Response) error {
 	return rest.REST(ctx, req, res).
-		Chain(rest.LoadAuthService(client.AuthUserFromContext)).
+		Chain(autoLoadAuthService).
 		// API
 		Action(rest.POST | rest.GET).
 		Chain(rest.ParamCheck(rest.PCCS{
@@ -70,7 +69,7 @@ func (*User) Register(ctx context.Context, req *api.Request, res *api.Response) 
 // Info API
 func (*User) Info(ctx context.Context, req *api.Request, res *api.Response) error {
 	return rest.REST(ctx, req, res).
-		Chain(rest.LoadAuthService(client.AuthUserFromContext)).
+		Chain(autoLoadAuthService).
 		// API
 		Action(rest.POST | rest.GET).
 		Chain(func(ctx context.Context, s *rest.Flow) error {
@@ -92,7 +91,7 @@ func (*User) Info(ctx context.Context, req *api.Request, res *api.Response) erro
 // Update API change pass or userinfo
 func (*User) Update(ctx context.Context, req *api.Request, res *api.Response) error {
 	return rest.REST(ctx, req, res).
-		Chain(rest.LoadAuthService(client.AuthUserFromContext)).
+		Chain(autoLoadAuthService).
 		Chain(rest.JWTCheck()).
 		// API
 		Action(rest.POST | rest.GET).
@@ -129,48 +128,6 @@ func (*User) Update(ctx context.Context, req *api.Request, res *api.Response) er
 			}
 			s.FreshJWT(user.Token)
 			return s.Success(user.User)
-		}).
-		Done().
-		// Finish
-		Final()
-}
-
-// Roles API
-func (*User) Roles(ctx context.Context, req *api.Request, res *api.Response) error {
-	return rest.REST(ctx, req, res).
-		Chain(rest.LoadAuthService(client.AuthUserFromContext)).
-		Chain(rest.JWTCheck()).
-		// API
-		Action(rest.POST | rest.GET).
-		Chain(func(ctx context.Context, s *rest.Flow) error {
-			res, err := s.AuthUserClient.Roles(s.Ctx, &auth.None{
-				UUID: s.Token.User.UUID,
-			})
-			if err != nil {
-				return rest.CleanErrResponse(raw.SrvName, err, errors.InternalServerError)
-			}
-			return s.Success(res.Data)
-		}).
-		Done().
-		// Finish
-		Final()
-}
-
-// Permissions API
-func (*User) Permissions(ctx context.Context, req *api.Request, res *api.Response) error {
-	return rest.REST(ctx, req, res).
-		Chain(rest.LoadAuthService(client.AuthUserFromContext)).
-		Chain(rest.JWTCheck()).
-		// API
-		Action(rest.POST | rest.GET).
-		Chain(func(ctx context.Context, s *rest.Flow) error {
-			res, err := s.AuthUserClient.Permissions(s.Ctx, &auth.None{
-				UUID: s.Token.User.UUID,
-			})
-			if err != nil {
-				return rest.CleanErrResponse(raw.SrvName, err, errors.InternalServerError)
-			}
-			return s.Success(res.Data)
 		}).
 		Done().
 		// Finish

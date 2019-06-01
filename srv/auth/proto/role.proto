@@ -10,9 +10,10 @@ service Role {
     rpc Select(RoleInfo) returns(RoleInfo) {}
     rpc Update(RoleInfo) returns(RoleInfo) {}
 
-    rpc Permissions(None) returns (Result) {}
+    rpc Perms(None) returns (Result) {}
 }
 
 message RoleInfo {
-    string ID = 1;
+    string name = 1;
+    string detail = 2;
 }

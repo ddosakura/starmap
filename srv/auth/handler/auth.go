@@ -31,7 +31,10 @@ func (s *User) Login(ctx context.Context, req *proto.UserAuth, res *proto.UserTo
 
 	auth := new(proto.UserAuth)
 	if err := s.findUser(repo, req.Username, auth); err != nil {
-		return raw.ErrUserNotExist
+		if err == gorm.ErrRecordNotFound {
+			return raw.ErrUserNotExist
+		}
+		return raw.ErrRepoError
 	}
 	if auth.Password != req.Password {
 		return raw.ErrPassWrong

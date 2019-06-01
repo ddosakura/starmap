@@ -25,6 +25,7 @@ func main() {
 
 	// Register Handler
 	proto.RegisterUserHandler(service.Server(), new(handler.User))
+	proto.RegisterRoleHandler(service.Server(), new(handler.Role))
 
 	// Run service
 	if err := service.Run(); err != nil {

@@ -22,7 +22,7 @@ service User {
     rpc Update(UserToken) returns(UserToken) {}
     
     rpc Roles(None) returns (Result) {}
-    rpc Permissions(None) returns (Result) {}
+    rpc Perms(None) returns (Result) {}
 }
 
 message UserAuth { // save in mysql

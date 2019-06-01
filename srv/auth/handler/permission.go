@@ -6,25 +6,25 @@ import (
 	proto "github.com/ddosakura/starmap/srv/auth/proto"
 )
 
-// Permission Handler
-type Permission struct{}
+// Perm Handler
+type Perm struct{}
 
 // Insert API
-func (s *Permission) Insert(context.Context, *proto.PermissionInfo, *proto.PermissionInfo) error {
+func (s *Perm) Insert(context.Context, *proto.PermInfo, *proto.PermInfo) error {
 	return nil
 }
 
 // Delete API
-func (s *Permission) Delete(context.Context, *proto.PermissionInfo, *proto.PermissionInfo) error {
+func (s *Perm) Delete(context.Context, *proto.PermInfo, *proto.PermInfo) error {
 	return nil
 }
 
 // Select API
-func (s *Permission) Select(context.Context, *proto.PermissionInfo, *proto.PermissionInfo) error {
+func (s *Perm) Select(context.Context, *proto.PermInfo, *proto.PermInfo) error {
 	return nil
 }
 
 // Update API
-func (s *Permission) Update(context.Context, *proto.PermissionInfo, *proto.PermissionInfo) error {
+func (s *Perm) Update(context.Context, *proto.PermInfo, *proto.PermInfo) error {
 	return nil
 }

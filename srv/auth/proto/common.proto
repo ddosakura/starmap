@@ -4,6 +4,7 @@ package starmap.srv.auth;
 
 message None {
     string UUID = 1;
+    string name = 2;
 }
 
 message Result {
