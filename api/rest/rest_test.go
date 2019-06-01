@@ -16,28 +16,30 @@ func Example() {
 
 	Handle := func(ctx context.Context, req *api.Request, res *api.Response) error {
 		return REST(ctx, req, res).
-			// LoadAuthService(client.AuthUserFromContext).
 			Chain(LoadAuthService(func(ctx context.Context) (auth.UserService, bool) { return nil, false })).
-			// CheckJWT().
 			Chain(JWTCheck()).
-			// Role([]string{"admin"}, common.LogicalAND).
 			Chain(RoleCheck([]string{"admin"}, LogicalAND)).
+			// API
 			Action(POST).
-			// Permission([]string{"user:insert"}, common.LogicalAND).
+			Chain(PermissionCheck([]string{"user:insert"}, LogicalAND)).
 			Chain(handle).
 			Done().
+			// API
 			Action(DELETE).
-			// Permission([]string{"user:delete"}, common.LogicalAND).
+			Chain(PermissionCheck([]string{"user:delete"}, LogicalAND)).
 			Chain(handle).
 			Done().
+			// API
 			Action(GET).
-			// Permission([]string{"user:select"}, common.LogicalAND).
+			Chain(PermissionCheck([]string{"user:select"}, LogicalAND)).
 			Chain(handle).
 			Done().
+			// API
 			Action(PUT).
-			// Permission([]string{"user:update"}, common.LogicalAND).
+			Chain(PermissionCheck([]string{"user:update"}, LogicalAND)).
 			Chain(handle).
 			Done().
+			// Finsh
 			Final()
 	}
 

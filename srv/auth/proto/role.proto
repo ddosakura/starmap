@@ -2,11 +2,15 @@ syntax = "proto3";
 
 package starmap.srv.auth;
 
+import "proto/common.proto";
+
 service Role {
     rpc Insert(RoleInfo) returns(RoleInfo) {}
     rpc Delete(RoleInfo) returns(RoleInfo) {}
     rpc Select(RoleInfo) returns(RoleInfo) {}
     rpc Update(RoleInfo) returns(RoleInfo) {}
+
+    rpc Permissions(None) returns (Result) {}
 }
 
 message RoleInfo {

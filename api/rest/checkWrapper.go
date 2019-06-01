@@ -20,7 +20,7 @@ func LoadAuthService(loader func(ctx context.Context) (auth.UserService, bool)) 
 	}
 }
 
-// JWTCheck Wrapper
+// JWTCheck Wrapper (load UserInfo in s.Token)
 func JWTCheck() Middleware {
 	return func(ctx context.Context, s *Flow) error {
 		Token := GetJWT(s.Req)

@@ -54,7 +54,9 @@ func (s *User) Login(ctx context.Context, req *proto.UserAuth, res *proto.UserTo
 }
 
 func (s *User) findUser(repo *gorm.DB, name string, user *proto.UserAuth) error {
-	return repo.First(user, "username = ?", name).Error
+	u := new(models.User)
+	u.UserAuth = user
+	return repo.First(u, "username = ?", name).Error
 }
 
 // Register Action
@@ -74,12 +76,10 @@ func (s *User) Register(ctx context.Context, req *proto.UserAuth, res *proto.Use
 		}
 	}()
 
-	// fmt.Println("start")
-
 	auth := new(proto.UserAuth)
 	if err := s.findUser(repo, req.Username, auth); err != nil {
 		if err == gorm.ErrRecordNotFound {
-			u := models.UserAuth{
+			u := models.User{
 				Model:    new(common.Model),
 				UserAuth: req,
 			}
@@ -171,7 +171,7 @@ func (s *User) Change(ctx context.Context, req *proto.UserToken, res *proto.User
 
 func (s *User) changePass(ctx context.Context, repo *gorm.DB, req *proto.UserToken, res *proto.UserToken) error {
 	return repo.
-		First(new(proto.UserAuth), "id = ?", req.Auth.ID).
+		First(new(models.User), "id = ?", req.Auth.ID).
 		Update("password", req.Auth.Password).
 		Error
 }
@@ -191,7 +191,6 @@ func (s *User) changeUserInfo(ctx context.Context, repo *mgo.Session, req *proto
 	checkData(data, "phone", req.User.Phone)
 	checkData(data, "email", req.User.Email)
 	checkData(data, "homepage", req.User.Homepage)
-	// pretty.Println(req.User, data)
 	if len(data) == 0 {
 		return raw.ErrNotUpdate
 	}
@@ -204,7 +203,6 @@ func (s *User) changeUserInfo(ctx context.Context, repo *mgo.Session, req *proto
 		Update:    bson.M{"$set": data},
 		ReturnNew: true,
 	}, user)
-	// pretty.Println(err, info)
 	if err != nil || info.Updated == 0 {
 		return raw.ErrRepoError
 	}

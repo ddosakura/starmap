@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/ddosakura/starmap/srv/auth/handler"
-	"github.com/ddosakura/starmap/srv/auth/models"
 	proto "github.com/ddosakura/starmap/srv/auth/proto"
 	"github.com/ddosakura/starmap/srv/auth/raw"
+	"github.com/ddosakura/starmap/srv/auth/models"
 	"github.com/ddosakura/starmap/srv/auth/subscriber"
 	"github.com/ddosakura/starmap/srv/common"
 	"github.com/micro/go-log"
@@ -40,11 +40,15 @@ func main() {
 	}
 	defer repo.Close()
 	repo.AutoMigrate(
-		&models.UserAuth{},
-		&models.RoleInfo{},
-		&models.PermissionInfo{},
-		&models.UserRole{},
-		&models.RolePermission{},
+		//&models.UserAuth{},
+		//&models.RoleInfo{},
+		//&models.PermissionInfo{},
+		&models.User{},
+		&models.Role{},
+		&models.Permission{},
+
+		//&models.UserRole{},
+		//&models.RolePermission{},
 	)
 
 	//log.Log("DB OK!")

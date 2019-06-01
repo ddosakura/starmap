@@ -14,4 +14,5 @@ service User {
 
     rpc Roles(go.api.Request) returns (go.api.Response) {}
     rpc Permissions(go.api.Request) returns (go.api.Response) {}
+    // TODO: add Permissions in api.auth.Role Service
 }

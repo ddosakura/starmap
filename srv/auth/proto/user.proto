@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package starmap.srv.auth;
 
+import "proto/common.proto";
+
 service User {
     // 登录注册
     rpc Login(UserAuth) returns (UserToken) {}
@@ -44,10 +46,4 @@ message UserInfo { // save in mongo
     string phone = 5;
     string email = 6;
     string homepage = 7;
-}
-
-message None {}
-
-message Result {
-    repeated string data = 1;
 }

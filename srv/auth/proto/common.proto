@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package starmap.srv.auth;
+
+message None {
+    string UUID = 1;
+}
+
+message Result {
+    repeated string data = 1;
+}
