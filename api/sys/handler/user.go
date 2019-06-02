@@ -8,7 +8,6 @@ import (
 
 	"github.com/ddosakura/starmap/api/rest"
 
-	// proto "github.com/ddosakura/starmap/api/sys/proto"
 	auth "github.com/ddosakura/starmap/srv/auth/proto"
 	api "github.com/micro/go-api/proto"
 )

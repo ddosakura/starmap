@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 
-	// proto "github.com/ddosakura/starmap/api/sys/proto"
 	"github.com/ddosakura/starmap/api/common"
 	"github.com/ddosakura/starmap/api/rest"
 	"github.com/ddosakura/starmap/api/sys/raw"
@@ -55,17 +54,16 @@ func (*Role) Entity(ctx context.Context, req *api.Request, res *api.Response) er
 		Done().
 		// API
 		// -> name
-		// <- name, detail
 		Action(rest.DELETE).
 		Chain(rest.PermCheck([]string{"role:delete"}, rest.LogicalAND)).
 		Chain(func(ctx context.Context, s *rest.Flow) error {
-			role, err := roleService.Delete(ctx, &auth.RoleInfo{
+			_, err := roleService.Delete(ctx, &auth.RoleInfo{
 				Name: r.Name,
 			})
 			if err != nil {
 				return rest.CleanErrResponse(raw.SrvName, err, errors.InternalServerError)
 			}
-			return s.Success(role)
+			return s.Success(nil)
 		}).
 		Done().
 		// API

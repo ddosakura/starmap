@@ -8,7 +8,6 @@ import (
 	"github.com/ddosakura/starmap/srv/auth/raw"
 	"github.com/ddosakura/starmap/srv/common"
 	"github.com/jinzhu/gorm"
-	"github.com/kr/pretty"
 )
 
 // Role Handler
@@ -25,13 +24,23 @@ func (s *Role) Insert(ctx context.Context, req *proto.RoleInfo, res *proto.RoleI
 		return raw.ErrRepoNotFound
 	}
 
-	pretty.Println(req)
-	if r := repo.Debug().Where("name = ?", req.Name).Attrs(req).FirstOrCreate(&models.Role{RoleInfo: res}); r.Error != nil {
+	if r := repo.Where(rQuery, req.Name).Attrs(req).FirstOrCreate(&models.Role{RoleInfo: res}); r.Error != nil {
 		return raw.ErrRepoError
 	}
-
 	if req.Detail != res.Detail {
 		return raw.ErrRoleHasExist
+	}
+	return nil
+}
+
+const rQuery = "name = ?"
+
+func rSelect(repo *gorm.DB, name string, entity *models.Role) error {
+	if r := repo.Where(rQuery, name).First(entity); r.Error != nil {
+		if r.RecordNotFound() {
+			return raw.ErrRoleNotExist
+		}
+		return raw.ErrRepoError
 	}
 	return nil
 }
@@ -45,21 +54,12 @@ func (s *Role) Delete(ctx context.Context, req *proto.RoleInfo, res *proto.RoleI
 	if !ok {
 		return raw.ErrRepoNotFound
 	}
+
 	r := &models.Role{RoleInfo: res}
-	if e := selectQ(repo, req.Name, r); e != nil {
+	if e := rSelect(repo, req.Name, r); e != nil {
 		return e
 	}
-	return repo.Debug().Delete(r).Error
-}
-
-func selectQ(repo *gorm.DB, name string, entity *models.Role) error {
-	if r := repo.Debug().Where("name = ?", name).First(entity); r.Error != nil {
-		if r.RecordNotFound() {
-			return raw.ErrRoleNotExist
-		}
-		return raw.ErrRepoError
-	}
-	return nil
+	return repo.Delete(r).Error
 }
 
 // Select API
@@ -72,7 +72,8 @@ func (s *Role) Select(ctx context.Context, req *proto.RoleInfo, res *proto.RoleI
 		return raw.ErrRepoNotFound
 	}
 
-	return selectQ(repo, req.Name, &models.Role{RoleInfo: res})
+	r := &models.Role{RoleInfo: res}
+	return rSelect(repo, req.Name, r)
 }
 
 // Update API
@@ -86,7 +87,7 @@ func (s *Role) Update(ctx context.Context, req *proto.RoleWrapper, res *proto.Ro
 	}
 
 	role := &models.Role{RoleInfo: res}
-	if e := selectQ(repo, req.Name, role); e != nil {
+	if e := rSelect(repo, req.Name, role); e != nil {
 		return e
 	}
 	if req.Role.Name != "" {
@@ -95,7 +96,7 @@ func (s *Role) Update(ctx context.Context, req *proto.RoleWrapper, res *proto.Ro
 	if req.Role.Detail != "" {
 		res.Detail = req.Role.Detail
 	}
-	if r := repo.Debug().Save(role); r.Error != nil {
+	if r := repo.Save(role); r.Error != nil {
 		return raw.ErrRepoError
 	}
 	return nil

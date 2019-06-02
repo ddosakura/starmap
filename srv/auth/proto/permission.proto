@@ -4,20 +4,18 @@ package starmap.srv.auth;
 
 service Perm {
     // --- 权限管理 ---
-    // ->
-    // <- 
+    // -> subject, action, detail
+    // <- subject, action, detail
     rpc Insert(PermInfo) returns(PermInfo) {}
-    // ->
-    // <- 
+    // -> subject, action
+    // <- subject, action, detail
     rpc Delete(PermInfo) returns(PermInfo) {}
-    // ->
-    // <- 
+    // -> subject, action
+    // <- subject, action, detail
     rpc Select(PermInfo) returns(PermInfo) {}
-    // ->
-    // <- 
+    // -> subject, action, perm{subject, action, detail}
+    // <- subject, action, detail
     rpc Update(PermWrapper) returns(PermInfo) {}
-    // ->
-    // <- 
 }
 
 message PermInfo {
