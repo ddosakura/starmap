@@ -13,6 +13,8 @@ var (
 	ErrRoleNotExist = errors.New("role not exist")
 	ErrPermNotExist = errors.New("perm not exist")
 	ErrUserHasExist = errors.New("user has exist")
+	ErrRoleHasExist = errors.New("role has exist")
+	ErrPermHasExist = errors.New("perm has exist")
 	ErrPassWrong    = errors.New("pass wrong")
 
 	ErrInvalidJWT = errors.New("jwt invalid")

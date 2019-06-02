@@ -10,21 +10,21 @@ import (
 type Perm struct{}
 
 // Insert API
-func (s *Perm) Insert(context.Context, *proto.PermInfo, *proto.PermInfo) error {
+func (s *Perm) Insert(ctx context.Context, req *proto.PermInfo, res *proto.PermInfo) error {
 	return nil
 }
 
 // Delete API
-func (s *Perm) Delete(context.Context, *proto.PermInfo, *proto.PermInfo) error {
+func (s *Perm) Delete(ctx context.Context, req *proto.PermInfo, res *proto.PermInfo) error {
 	return nil
 }
 
 // Select API
-func (s *Perm) Select(context.Context, *proto.PermInfo, *proto.PermInfo) error {
+func (s *Perm) Select(ctx context.Context, req *proto.PermInfo, res *proto.PermInfo) error {
 	return nil
 }
 
 // Update API
-func (s *Perm) Update(context.Context, *proto.PermInfo, *proto.PermInfo) error {
+func (s *Perm) Update(ctx context.Context, req *proto.PermWrapper, res *proto.PermInfo) error {
 	return nil
 }

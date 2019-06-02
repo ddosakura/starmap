@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	auth "github.com/ddosakura/starmap/srv/auth/proto"
 	api "github.com/micro/go-api/proto"
 )
 
@@ -16,7 +15,7 @@ func Example() {
 
 	Handle := func(ctx context.Context, req *api.Request, res *api.Response) error {
 		return REST(ctx, req, res).
-			Chain(LoadAuthService(func(ctx context.Context) (auth.UserService, bool) { return nil, false })).
+			Chain(LoadAuthService(func(ctx context.Context) (AuthService, bool) { return nil, false })).
 			Chain(JWTCheck()).
 			Chain(RoleCheck([]string{"admin"}, LogicalAND)).
 			// API

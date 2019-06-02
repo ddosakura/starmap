@@ -6,18 +6,18 @@ import "proto/common.proto";
 
 service Role {
     // --- 角色管理 ---
-    // ->
-    // <- 
+    // -> name, detail
+    // <- name, detail
     rpc Insert(RoleInfo) returns(RoleInfo) {}
-    // ->
-    // <- 
+    // -> name
+    // <- name, detail
     rpc Delete(RoleInfo) returns(RoleInfo) {}
-    // ->
-    // <- 
+    // -> name
+    // <- name, detail
     rpc Select(RoleInfo) returns(RoleInfo) {}
-    // ->
-    // <- 
-    rpc Update(RoleInfo) returns(RoleInfo) {}
+    // -> name, role{name, detail}
+    // <- name, detail
+    rpc Update(RoleWrapper) returns(RoleInfo) {}
 
     // --- RP管理 ---
     // 角色权限查询
@@ -33,4 +33,9 @@ service Role {
 message RoleInfo {
     string name = 1; // shortname has higher level
     string detail = 2;
+}
+
+message RoleWrapper {
+    string name = 1;
+    RoleInfo role = 2;
 }

@@ -8,7 +8,7 @@ import (
 	"github.com/micro/go-micro/errors"
 )
 
-// Order: LoadAuthService -> JWTCheck -> RoleCheck/PermCheck/SuperRole
+// 必须 Order: LoadAuthService -> JWTCheck -> RoleCheck/PermCheck/SuperRole
 
 // AuthService needed to load
 type AuthService interface {

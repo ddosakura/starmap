@@ -29,34 +29,33 @@ func (*User) Entity(ctx context.Context, req *api.Request, res *api.Response) er
 		// -> username, password
 		// <- userinfo
 		Action(rest.POST).
-		Chain(rest.PermCheck([]string{"user:insert"}, rest.LogicalAND)).
 		Chain(rest.ParamCheck(rest.PCCS{
 			"username": rest.PccMust,
 			"password": rest.PccMust,
 		})).
 		Chain(rest.ParamAutoLoad(nil, u.Auth)).
+		Chain(rest.PermCheck([]string{"user:insert"}, rest.LogicalAND)).
 		Chain(func(ctx context.Context, s *rest.Flow) error {
 			userToken, err := s.AuthUserClient.(auth.UserService).Insert(ctx, u.Auth)
 			if err != nil {
-				return err
+				return rest.CleanErrResponse(raw.SrvName, err, errors.InternalServerError)
 			}
 			return s.Success(userToken.User)
 		}).
 		Done().
 		// API
 		// -> id
-		// <- NULL
 		Action(rest.DELETE).
-		Chain(rest.PermCheck([]string{"user:delete"}, rest.LogicalAND)).
 		Chain(rest.ParamCheck(rest.PCCS{
 			"id": rest.PccMust,
 		})).
 		Chain(rest.ParamAutoLoad(nil, u.Auth)).
+		Chain(rest.PermCheck([]string{"user:delete"}, rest.LogicalAND)).
 		Chain(rest.RoleLevelCheck(u.Auth.ID)).
 		Chain(func(ctx context.Context, s *rest.Flow) error {
 			_, err := s.AuthUserClient.(auth.UserService).Delete(ctx, u.Auth)
 			if err != nil {
-				return err
+				return rest.CleanErrResponse(raw.SrvName, err, errors.InternalServerError)
 			}
 			return s.Success(nil)
 		}).
@@ -65,17 +64,17 @@ func (*User) Entity(ctx context.Context, req *api.Request, res *api.Response) er
 		// -> id/username
 		// <- userinfo
 		Action(rest.GET).
-		Chain(rest.PermCheck([]string{"user:select"}, rest.LogicalAND)).
 		Chain(rest.ParamCheck(rest.PCCS{
 			"$auth":    rest.PccLabel(rest.PccMust, rest.LogicalOR),
 			"id":       rest.PccLink("$auth"),
 			"username": rest.PccLink("$auth"),
 		})).
 		Chain(rest.ParamAutoLoad(nil, u.Auth)).
+		Chain(rest.PermCheck([]string{"user:select"}, rest.LogicalAND)).
 		Chain(func(ctx context.Context, s *rest.Flow) error {
 			userToken, err := s.AuthUserClient.(auth.UserService).Select(ctx, u.Auth)
 			if err != nil {
-				return err
+				return rest.CleanErrResponse(raw.SrvName, err, errors.InternalServerError)
 			}
 			return s.Success(userToken.User)
 		}).
@@ -84,13 +83,13 @@ func (*User) Entity(ctx context.Context, req *api.Request, res *api.Response) er
 		// -> id
 		// <- userinfo
 		Action(rest.PUT).
-		Chain(rest.PermCheck([]string{"user:update"}, rest.LogicalAND)).
 		Chain(rest.ParamCheck(rest.PCCS{
 			"id": rest.PccMust,
 		})).
 		Chain(rest.ParamAutoLoad(nil, u.Auth)).
-		Chain(rest.RoleLevelCheck(u.Auth.ID)).
 		Chain(rest.ParamAutoLoad(nil, u.User)).
+		Chain(rest.PermCheck([]string{"user:update"}, rest.LogicalAND)).
+		Chain(rest.RoleLevelCheck(u.Auth.ID)).
 		Chain(func(ctx context.Context, s *rest.Flow) error {
 			if u.Auth.Password == "" {
 				u.User.UUID = u.Auth.ID
@@ -115,7 +114,7 @@ func (*User) Role(ctx context.Context, req *api.Request, res *api.Response) erro
 	playload := func(ctx context.Context, s *rest.Flow) error {
 		result, err := s.AuthUserClient.(auth.UserService).Role(ctx, m)
 		if err != nil {
-			return err
+			return rest.CleanErrResponse(raw.SrvName, err, errors.InternalServerError)
 		}
 		return s.Success(result.Data)
 	}

@@ -9,6 +9,9 @@ import (
 	"github.com/micro/go-micro/errors"
 )
 
+// 建议 Order: ParamCheck -> ParamAutoLoad
+// Order: ParamAutoLoad (without paramCheck, paramDefault, paramRename, ...)
+
 // PCC - ParamCheck Config
 type PCC struct {
 	Must     bool

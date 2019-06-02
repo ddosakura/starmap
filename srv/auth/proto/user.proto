@@ -35,7 +35,6 @@ service User {
     // <- user
     rpc Insert(UserAuth) returns(UserToken) {}
     // -> id
-    // <- NULL
     rpc Delete(UserAuth) returns(UserToken) {}
     // -> id/username
     // <- user

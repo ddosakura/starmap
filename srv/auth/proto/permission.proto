@@ -15,7 +15,7 @@ service Perm {
     rpc Select(PermInfo) returns(PermInfo) {}
     // ->
     // <- 
-    rpc Update(PermInfo) returns(PermInfo) {}
+    rpc Update(PermWrapper) returns(PermInfo) {}
     // ->
     // <- 
 }
@@ -24,4 +24,10 @@ message PermInfo {
     string subject = 1;
     string action = 2;
     string detail  = 3;
+}
+
+message PermWrapper {
+    string subject = 1;
+    string action = 2;
+    PermInfo perm = 3;
 }
