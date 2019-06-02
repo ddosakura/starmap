@@ -59,7 +59,8 @@ func CleanErrResponse(id string, e error, fn func(id, format string, a ...interf
 
 // --- Rule Check Utils ---
 
-func aInB(a string, b []string) bool {
+// ItemInList util
+func ItemInList(a string, b []string) bool {
 	for _, s := range b {
 		if a == s {
 			return true
@@ -71,7 +72,7 @@ func aInB(a string, b []string) bool {
 // AInB test
 func AInB(a []string, b []string) bool {
 	for _, s := range a {
-		if !aInB(s, b) {
+		if !ItemInList(s, b) {
 			return false
 		}
 	}
@@ -86,7 +87,7 @@ func checkRuleRP(rules []string, logical Logical, result []string) error {
 		}
 	case LogicalOR:
 		for _, r := range result {
-			if aInB(r, rules) {
+			if ItemInList(r, rules) {
 				return nil
 			}
 		}

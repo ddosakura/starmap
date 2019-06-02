@@ -2,7 +2,9 @@ package handler
 
 import (
 	"context"
-	"fmt"
+
+	"github.com/ddosakura/starmap/api/sys/raw"
+	"github.com/micro/go-micro/errors"
 
 	"github.com/ddosakura/starmap/api/rest"
 
@@ -20,7 +22,6 @@ func (*User) Entity(ctx context.Context, req *api.Request, res *api.Response) er
 	u.Auth = new(auth.UserAuth)
 	u.User = new(auth.UserInfo)
 
-	// TODO: User Entity API
 	return rest.REST(ctx, req, res).
 		Chain(autoLoadAuthService).
 		Chain(rest.JWTCheck()).
@@ -83,8 +84,17 @@ func (*User) Entity(ctx context.Context, req *api.Request, res *api.Response) er
 		Chain(rest.RoleLevelCheck(u.Auth.ID)).
 		Chain(rest.ParamAutoLoad(nil, u.User)).
 		Chain(func(ctx context.Context, s *rest.Flow) error {
-			fmt.Println("M", s.Rest, u)
-			return s.Success(fmt.Sprintf("M %v", s.Rest))
+			if u.Auth.Password == "" {
+				u.User.UUID = u.Auth.ID
+				u.Auth = nil
+			} else {
+				u.User = nil
+			}
+			userToken, err := s.AuthUserClient.(auth.UserService).Change(ctx, u)
+			if err != nil {
+				return rest.CleanErrResponse(raw.SrvName, err, errors.InternalServerError)
+			}
+			return s.Success(userToken.User)
 		}).
 		Done().
 		// Finish
@@ -93,31 +103,54 @@ func (*User) Entity(ctx context.Context, req *api.Request, res *api.Response) er
 
 // Role Modify API
 func (*User) Role(ctx context.Context, req *api.Request, res *api.Response) error {
-	// TODO: Role Modify API
+	m := new(auth.Modification)
+	playload := func(ctx context.Context, s *rest.Flow) error {
+		result, err := s.AuthUserClient.(auth.UserService).Role(ctx, m)
+		if err != nil {
+			return err
+		}
+		return s.Success(result.Data)
+	}
+
 	return rest.REST(ctx, req, res).
 		Chain(autoLoadAuthService).
 		Chain(rest.JWTCheck()).
 		Chain(rest.PermCheck([]string{"user:role"}, rest.LogicalAND)).
-		// API
+		// API - Add role for user
+		// Param: id, name
 		Action(rest.POST).
+		Chain(rest.ParamCheck(rest.PCCS{
+			"id":   rest.PccRename(rest.PccMust, "UUID"),
+			"name": rest.PccMust,
+		})).
+		Chain(rest.ParamAutoLoad(nil, m)).
 		Chain(func(ctx context.Context, s *rest.Flow) error {
-			fmt.Println("M", s.Rest)
-			return s.Success(fmt.Sprintf("M %v", s.Rest))
+			m.Modify = auth.M_Add
+			return nil
 		}).
+		Chain(playload).
 		Done().
-		// API
+		// API - Del role for user
+		// Param: id, name
 		Action(rest.DELETE).
+		Chain(rest.ParamCheck(rest.PCCS{
+			"id":   rest.PccRename(rest.PccMust, "UUID"),
+			"name": rest.PccMust,
+		})).
+		Chain(rest.ParamAutoLoad(nil, m)).
 		Chain(func(ctx context.Context, s *rest.Flow) error {
-			fmt.Println("M", s.Rest)
-			return s.Success(fmt.Sprintf("M %v", s.Rest))
+			m.Modify = auth.M_Del
+			return nil
 		}).
+		Chain(playload).
 		Done().
-		// API
+		// API - All Roles
 		Action(rest.GET).
 		Chain(func(ctx context.Context, s *rest.Flow) error {
-			fmt.Println("M", s.Rest)
-			return s.Success(fmt.Sprintf("M %v", s.Rest))
+			m.Modify = auth.M_List
+			return nil
 		}).
+		Chain(playload).
 		Done().
 		// Finish
 		Final()

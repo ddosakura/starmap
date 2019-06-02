@@ -117,5 +117,8 @@ func (s *User) Select(ctx context.Context, req *proto.UserAuth, res *proto.UserT
 
 // Update Action
 func (s *User) Update(ctx context.Context, req *proto.UserToken, res *proto.UserToken) error {
-	return nil
+	// TODO: Change 会签 JWT，这里不需要，之后考虑改
+	e := s.Change(ctx, req, res)
+	res.Token = ""
+	return e
 }

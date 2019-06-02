@@ -14,13 +14,17 @@ message Result {
 }
 
 enum M {
-    Add = 0;
-    Remove = 1;
+    List = 0;
+    Add = 1;
+    Del = 2;
 }
 
 message Modification {
     M modify = 1;
-    string name = 2;
-    string subject = 3;
-    string action = 4;
+
+    string UUID = 2; // user_id
+    string name = 3; // role_name
+
+    string subject = 4; // perm_sub
+    string action = 5; // perm_act
 }

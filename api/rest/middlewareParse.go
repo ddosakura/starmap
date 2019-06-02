@@ -3,6 +3,7 @@ package rest
 import (
 	"context"
 	"encoding/json"
+	"strconv"
 
 	api "github.com/micro/go-api/proto"
 	"github.com/micro/go-micro/errors"
@@ -10,12 +11,15 @@ import (
 
 // PCC - ParamCheck Config
 type PCC struct {
-	Must        bool
-	Multi       bool
-	DefaultV    []string
+	Must     bool
+	Multi    bool
+	DefaultV []string
+
 	Link        string
 	LinkLogical Logical
 	linkResult  map[string]bool
+
+	Rename string
 }
 
 // PCCS - PCC Group
@@ -30,9 +34,10 @@ var (
 // PccLabel Builder
 func PccLabel(pcc *PCC, logical Logical) *PCC {
 	return &PCC{
-		Must:        pcc.Must,
-		Multi:       pcc.Multi,
-		DefaultV:    pcc.DefaultV,
+		Must:     pcc.Must,
+		Multi:    pcc.Multi,
+		DefaultV: pcc.DefaultV,
+
 		LinkLogical: logical,
 		linkResult:  make(map[string]bool),
 	}
@@ -42,6 +47,17 @@ func PccLabel(pcc *PCC, logical Logical) *PCC {
 func PccLink(label string) *PCC {
 	return &PCC{
 		Link: label,
+	}
+}
+
+// PccRename Builder
+func PccRename(pcc *PCC, name string) *PCC {
+	return &PCC{
+		Must:     pcc.Must,
+		Multi:    pcc.Multi,
+		DefaultV: pcc.DefaultV,
+
+		Rename: name,
 	}
 }
 
@@ -112,15 +128,34 @@ func ParamCheck(pccs PCCS) Middleware {
 				}
 			}
 		}
+
+		for k, pcc := range pccs {
+			if pcc.Rename != "" {
+				s.Params[pcc.Rename] = s.Params[k]
+				pcc.Rename = ""
+				delete(s.Params, k)
+			}
+		}
+
 		return nil
 	}
 }
 
 // ParamModify for ParamAutoLoad
-type ParamModify map[string]func([]string) interface{}
+type ParamModify func([]string) (interface{}, error)
+
+// ParamModify in common use
+var (
+	PmInt = func(ps []string) (interface{}, error) {
+		return strconv.Atoi(ps[0])
+	}
+)
+
+// ParamModifyList for ParamAutoLoad
+type ParamModifyList map[string]ParamModify
 
 // ParamAutoLoad Wrapper
-func ParamAutoLoad(modify ParamModify, entity interface{}) Middleware {
+func ParamAutoLoad(modify ParamModifyList, entity interface{}) Middleware {
 	return func(ctx context.Context, s *Flow) error {
 		ps := make(map[string]interface{})
 		for k, p := range s.Params {
@@ -128,7 +163,11 @@ func ParamAutoLoad(modify ParamModify, entity interface{}) Middleware {
 				if modify == nil || modify[k] == nil {
 					ps[k] = p.Values[0]
 				} else {
-					ps[k] = modify[k](p.Values)
+					v, e := modify[k](p.Values)
+					if e != nil {
+						return e
+					}
+					ps[k] = v
 				}
 			}
 		}

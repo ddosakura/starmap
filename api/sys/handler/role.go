@@ -5,8 +5,12 @@ import (
 	"fmt"
 
 	// proto "github.com/ddosakura/starmap/api/sys/proto"
+	"github.com/ddosakura/starmap/api/common"
 	"github.com/ddosakura/starmap/api/rest"
+	"github.com/ddosakura/starmap/api/sys/raw"
+	auth "github.com/ddosakura/starmap/srv/auth/proto"
 	api "github.com/micro/go-api/proto"
+	"github.com/micro/go-micro/errors"
 )
 
 // Role Handler
@@ -56,31 +60,61 @@ func (*Role) Entity(ctx context.Context, req *api.Request, res *api.Response) er
 
 // Perm Modify API
 func (*Role) Perm(ctx context.Context, req *api.Request, res *api.Response) error {
-	// TODO: Perm Modify API
+	roleService, ok := common.AuthRoleFromContext(ctx)
+	if !ok {
+		return errors.InternalServerError(raw.SrvName, "auth client not found")
+	}
+
+	m := new(auth.Modification)
+	playload := func(ctx context.Context, s *rest.Flow) error {
+		result, err := roleService.Perm(ctx, m)
+		if err != nil {
+			return err
+		}
+		return s.Success(result.Data)
+	}
+
 	return rest.REST(ctx, req, res).
 		Chain(autoLoadAuthService).
 		Chain(rest.JWTCheck()).
 		Chain(rest.PermCheck([]string{"role:perm"}, rest.LogicalAND)).
-		// API
+		// API - Add perm for role
+		// Param: name(role_name), subject, action
 		Action(rest.POST).
+		Chain(rest.ParamCheck(rest.PCCS{
+			"name":    rest.PccMust,
+			"subject": rest.PccMust,
+			"action":  rest.PccMust,
+		})).
+		Chain(rest.ParamAutoLoad(nil, m)).
 		Chain(func(ctx context.Context, s *rest.Flow) error {
-			fmt.Println("M", s.Rest)
-			return s.Success(fmt.Sprintf("M %v", s.Rest))
+			m.Modify = auth.M_Add
+			return nil
 		}).
+		Chain(playload).
 		Done().
-		// API
+		// API - Del perm for role
+		// Param: name, subject, action
 		Action(rest.DELETE).
+		Chain(rest.ParamCheck(rest.PCCS{
+			"name":    rest.PccMust,
+			"subject": rest.PccMust,
+			"action":  rest.PccMust,
+		})).
+		Chain(rest.ParamAutoLoad(nil, m)).
 		Chain(func(ctx context.Context, s *rest.Flow) error {
-			fmt.Println("M", s.Rest)
-			return s.Success(fmt.Sprintf("M %v", s.Rest))
+			m.Modify = auth.M_Del
+			return nil
 		}).
+		Chain(playload).
 		Done().
-		// API
+		// API - All Perms
 		Action(rest.GET).
 		Chain(func(ctx context.Context, s *rest.Flow) error {
-			fmt.Println("M", s.Rest)
-			return s.Success(fmt.Sprintf("M %v", s.Rest))
+			m.Modify = auth.M_List
+			return nil
 		}).
+		Chain(playload).
 		Done().
 		// Finish
 		Final()
