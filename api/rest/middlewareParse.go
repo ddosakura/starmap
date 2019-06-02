@@ -2,6 +2,7 @@ package rest
 
 import (
 	"context"
+	"encoding/json"
 
 	api "github.com/micro/go-api/proto"
 	"github.com/micro/go-micro/errors"
@@ -20,6 +21,7 @@ type PCCS map[string]*PCC
 // PCC in common use
 var (
 	PccEmptyStr = &PCC{DefaultV: []string{""}}
+	PccMust     = &PCC{Must: true}
 )
 
 // ParamCheck Wrapper
@@ -44,5 +46,29 @@ func ParamCheck(pccs PCCS) Middleware {
 			}
 		}
 		return nil
+	}
+}
+
+// ParamModify for ParamAutoLoad
+type ParamModify map[string]func([]string) interface{}
+
+// ParamAutoLoad Wrapper
+func ParamAutoLoad(modify ParamModify, entity interface{}) Middleware {
+	return func(ctx context.Context, s *Flow) error {
+		ps := make(map[string]interface{})
+		for k, p := range s.Params {
+			if len(p.Values) > 0 {
+				if modify == nil || modify[k] == nil {
+					ps[k] = p.Values[0]
+				} else {
+					ps[k] = modify[k](p.Values)
+				}
+			}
+		}
+		bs, err := json.Marshal(ps)
+		if err != nil {
+			return err
+		}
+		return json.Unmarshal(bs, &entity)
 	}
 }

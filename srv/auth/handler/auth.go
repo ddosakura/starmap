@@ -30,8 +30,8 @@ func (s *User) Login(ctx context.Context, req *proto.UserAuth, res *proto.UserTo
 	}
 
 	auth := new(proto.UserAuth)
-	if err := s.findUser(repo, req.Username, auth); err != nil {
-		if err == gorm.ErrRecordNotFound {
+	if result := s.findUser(repo, req.Username, auth); result.Error != nil {
+		if result.RecordNotFound() {
 			return raw.ErrUserNotExist
 		}
 		return raw.ErrRepoError
@@ -51,69 +51,28 @@ func (s *User) Login(ctx context.Context, req *proto.UserAuth, res *proto.UserTo
 	}
 	if token, err := common.BuildUserJWT(user).Sign(jwtTerm); err == nil {
 		res.Token = token
+		res.User = user
 		return nil
 	}
 	return raw.ErrSignJWT
 }
 
-func (s *User) findUser(repo *gorm.DB, name string, user *proto.UserAuth) error {
+func (s *User) findUser(repo *gorm.DB, name string, user *proto.UserAuth) *gorm.DB {
 	u := new(models.User)
 	u.UserAuth = user
-	return repo.First(u, "username = ?", name).Error
+	return repo.First(u, "username = ?", name)
 }
 
 // Register Action
 func (s *User) Register(ctx context.Context, req *proto.UserAuth, res *proto.UserToken) error {
-	repo, ok := common.GetGormRepo(ctx)
-	if !ok {
-		return raw.ErrRepoNotFound
+	if err := s.Insert(ctx, req, res); err != nil {
+		return err
 	}
-	//repo.Lock()
-	//defer repo.Unlock()
-	tx := repo.Begin()
-	defer tx.Commit()
-	defer func() {
-		e := recover()
-		if e != nil {
-			tx.Rollback()
-		}
-	}()
-
-	auth := new(proto.UserAuth)
-	if err := s.findUser(repo, req.Username, auth); err != nil {
-		if err == gorm.ErrRecordNotFound {
-			u := models.User{
-				Model:    new(common.Model),
-				UserAuth: req,
-			}
-			if err = repo.Create(u).Error; err == nil {
-				repo, ok := common.GetMongoRepo(ctx)
-				if !ok {
-					tx.Rollback()
-					return raw.ErrRepoNotFound
-				}
-				user := &proto.UserInfo{
-					UUID:     u.ID,
-					Nickname: "user-" + u.ID,
-					Avatar:   "",
-					Motto:    "",
-					Phone:    "",
-					Email:    "",
-					Homepage: "",
-				}
-				if err := repo.DB(raw.UserDB).C(raw.UserInfoC).Insert(user); err == nil {
-					if token, err := common.BuildUserJWT(user).Sign(jwtTerm); err == nil {
-						res.Token = token
-						return nil
-					}
-					return raw.ErrSignJWT
-				}
-			}
-			tx.Rollback()
-		}
-		return raw.ErrRepoError
+	if token, err := common.BuildUserJWT(res.User).Sign(jwtTerm); err == nil {
+		res.Token = token
+		return nil
 	}
-	return raw.ErrUserHasExist
+	return raw.ErrSignJWT
 }
 
 // Info Action

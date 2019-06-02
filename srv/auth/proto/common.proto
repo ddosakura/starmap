@@ -2,11 +2,25 @@ syntax = "proto3";
 
 package starmap.srv.auth;
 
-message None {
+message None {}
+
+message Identity {
     string UUID = 1;
     string name = 2;
 }
 
 message Result {
     repeated string data = 1;
+}
+
+enum M {
+    Add = 0;
+    Remove = 1;
+}
+
+message Modification {
+    M modify = 1;
+    string name = 2;
+    string subject = 3;
+    string action = 4;
 }

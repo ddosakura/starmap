@@ -19,7 +19,7 @@ func (*User) Roles(ctx context.Context, req *api.Request, res *api.Response) err
 		// API
 		Action(rest.POST | rest.GET).
 		Chain(func(ctx context.Context, s *rest.Flow) error {
-			res, err := s.AuthUserClient.Roles(s.Ctx, &auth.None{
+			res, err := s.AuthUserClient.Roles(s.Ctx, &auth.Identity{
 				UUID: s.Token.User.UUID,
 			})
 			if err != nil {
@@ -40,7 +40,7 @@ func (*User) Perms(ctx context.Context, req *api.Request, res *api.Response) err
 		// API
 		Action(rest.POST | rest.GET).
 		Chain(func(ctx context.Context, s *rest.Flow) error {
-			res, err := s.AuthUserClient.Perms(s.Ctx, &auth.None{
+			res, err := s.AuthUserClient.Perms(s.Ctx, &auth.Identity{
 				UUID: s.Token.User.UUID,
 			})
 			if err != nil {
@@ -71,7 +71,7 @@ func (*Role) Perms(ctx context.Context, req *api.Request, res *api.Response) err
 			"role": &rest.PCC{Must: true},
 		})).
 		Chain(func(ctx context.Context, s *rest.Flow) error {
-			res, err := authRoleClient.Perms(s.Ctx, &auth.None{
+			res, err := authRoleClient.Perms(s.Ctx, &auth.Identity{
 				Name: s.Params["role"].Values[0],
 			})
 			if err != nil {

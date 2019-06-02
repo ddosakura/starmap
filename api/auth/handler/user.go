@@ -16,19 +16,18 @@ type User struct {
 
 // Login API
 func (*User) Login(ctx context.Context, req *api.Request, res *api.Response) error {
+	a := new(auth.UserAuth)
 	return rest.REST(ctx, req, res).
 		Chain(autoLoadAuthService).
 		// API
 		Action(rest.POST | rest.GET).
 		Chain(rest.ParamCheck(map[string]*rest.PCC{
-			"user": &rest.PCC{Must: true},
-			"pass": &rest.PCC{Must: true},
+			"username": rest.PccMust,
+			"password": rest.PccMust,
 		})).
+		Chain(rest.ParamAutoLoad(nil, a)).
 		Chain(func(ctx context.Context, s *rest.Flow) error {
-			userToken, err := s.AuthUserClient.(auth.UserService).Login(ctx, &auth.UserAuth{
-				Username: s.Params["user"].Values[0],
-				Password: s.Params["pass"].Values[0],
-			})
+			userToken, err := s.AuthUserClient.(auth.UserService).Login(ctx, a)
 			if err != nil {
 				return rest.CleanErrResponse(raw.SrvName, err, errors.InternalServerError)
 			}
@@ -42,19 +41,18 @@ func (*User) Login(ctx context.Context, req *api.Request, res *api.Response) err
 
 // Register API
 func (*User) Register(ctx context.Context, req *api.Request, res *api.Response) error {
+	a := new(auth.UserAuth)
 	return rest.REST(ctx, req, res).
 		Chain(autoLoadAuthService).
 		// API
 		Action(rest.POST | rest.GET).
-		Chain(rest.ParamCheck(rest.PCCS{
-			"user": &rest.PCC{Must: true},
-			"pass": &rest.PCC{Must: true},
+		Chain(rest.ParamCheck(map[string]*rest.PCC{
+			"username": rest.PccMust,
+			"password": rest.PccMust,
 		})).
+		Chain(rest.ParamAutoLoad(nil, a)).
 		Chain(func(ctx context.Context, s *rest.Flow) error {
-			userToken, err := s.AuthUserClient.(auth.UserService).Register(ctx, &auth.UserAuth{
-				Username: s.Params["user"].Values[0],
-				Password: s.Params["pass"].Values[0],
-			})
+			userToken, err := s.AuthUserClient.(auth.UserService).Register(ctx, a)
 			if err != nil {
 				return rest.CleanErrResponse(raw.SrvName, err, errors.InternalServerError)
 			}
@@ -90,39 +88,26 @@ func (*User) Info(ctx context.Context, req *api.Request, res *api.Response) erro
 
 // Update API change pass or userinfo
 func (*User) Update(ctx context.Context, req *api.Request, res *api.Response) error {
+	u := new(auth.UserToken)
+	u.Auth = new(auth.UserAuth)
+	u.User = new(auth.UserInfo)
+
 	return rest.REST(ctx, req, res).
 		Chain(autoLoadAuthService).
 		Chain(rest.JWTCheck()).
 		// API
 		Action(rest.POST | rest.GET).
-		Chain(rest.ParamCheck(rest.PCCS{
-			"pass":     rest.PccEmptyStr,
-			"nickname": rest.PccEmptyStr,
-			"avatar":   rest.PccEmptyStr,
-			"motto":    rest.PccEmptyStr,
-			"phone":    rest.PccEmptyStr,
-			"email":    rest.PccEmptyStr,
-			"homepage": rest.PccEmptyStr,
-		})).
+		Chain(rest.ParamAutoLoad(nil, u.Auth)).
+		Chain(rest.ParamAutoLoad(nil, u.User)).
 		Chain(func(ctx context.Context, s *rest.Flow) error {
-			user := &auth.UserToken{}
-			if s.Params["pass"].Values[0] == "" {
-				user.User = &auth.UserInfo{
-					UUID:     s.Token.User.UUID,
-					Nickname: s.Params["nickname"].Values[0],
-					Avatar:   s.Params["avatar"].Values[0],
-					Motto:    s.Params["motto"].Values[0],
-					Phone:    s.Params["phone"].Values[0],
-					Email:    s.Params["email"].Values[0],
-					Homepage: s.Params["homepage"].Values[0],
-				}
+			if u.Auth.Password == "" {
+				u.User.UUID = s.Token.User.UUID
+				u.Auth = nil
 			} else {
-				user.Auth = &auth.UserAuth{
-					ID:       s.Token.User.UUID,
-					Password: s.Params["pass"].Values[0],
-				}
+				u.Auth.ID = s.Token.User.UUID
+				u.User = nil
 			}
-			user, err := s.AuthUserClient.(auth.UserService).Change(ctx, user)
+			user, err := s.AuthUserClient.(auth.UserService).Change(ctx, u)
 			if err != nil {
 				return rest.CleanErrResponse(raw.SrvName, err, errors.InternalServerError)
 			}

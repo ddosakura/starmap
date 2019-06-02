@@ -10,7 +10,7 @@ import (
 )
 
 // Roles Action
-func (s *User) Roles(ctx context.Context, req *proto.None, res *proto.Result) error {
+func (s *User) Roles(ctx context.Context, req *proto.Identity, res *proto.Result) error {
 	repo, ok := common.GetGormRepo(ctx)
 	if !ok {
 		return raw.ErrRepoNotFound
@@ -32,7 +32,7 @@ func (s *User) Roles(ctx context.Context, req *proto.None, res *proto.Result) er
 }
 
 // Perms Action
-func (s *User) Perms(ctx context.Context, req *proto.None, res *proto.Result) error {
+func (s *User) Perms(ctx context.Context, req *proto.Identity, res *proto.Result) error {
 	repo, ok := common.GetGormRepo(ctx)
 	if !ok {
 		return raw.ErrRepoNotFound
@@ -46,7 +46,7 @@ func (s *User) Perms(ctx context.Context, req *proto.None, res *proto.Result) er
 	if result := repo.Model(user).Related(&roles, "Roles"); result.Error != nil {
 		return raw.ErrRepoError
 	}
-	if result := repo.Debug().Model(&roles).Related(&perms, "Perms"); result.Error != nil {
+	if result := repo.Model(&roles).Related(&perms, "Perms"); result.Error != nil {
 		return raw.ErrRepoError
 	}
 
@@ -58,7 +58,7 @@ func (s *User) Perms(ctx context.Context, req *proto.None, res *proto.Result) er
 }
 
 // Perms Action
-func (s *Role) Perms(ctx context.Context, req *proto.None, res *proto.Result) error {
+func (s *Role) Perms(ctx context.Context, req *proto.Identity, res *proto.Result) error {
 	repo, ok := common.GetGormRepo(ctx)
 	if !ok {
 		return raw.ErrRepoNotFound
@@ -68,13 +68,13 @@ func (s *Role) Perms(ctx context.Context, req *proto.None, res *proto.Result) er
 	rule := new(models.Role)
 	//rule.RoleInfo = new(proto.RoleInfo)
 	//rule.RoleInfo.Name = req.Name
-	if result := repo.Debug().First(rule, "name = ?", req.Name); result.Error != nil {
+	if result := repo.First(rule, "name = ?", req.Name); result.Error != nil {
 		if result.RecordNotFound() {
 			return raw.ErrRoleNotExist
 		}
 		return raw.ErrRepoError
 	}
-	if result := repo.Debug().Model(rule).Related(&perms, "Perms"); result.Error != nil {
+	if result := repo.Model(rule).Related(&perms, "Perms"); result.Error != nil {
 		return raw.ErrRepoError
 	}
 
@@ -82,5 +82,15 @@ func (s *Role) Perms(ctx context.Context, req *proto.None, res *proto.Result) er
 	for _, p := range perms {
 		res.Data = append(res.Data, p.Subject+":"+p.Action)
 	}
+	return nil
+}
+
+// Role modify
+func (s *User) Role(ctx context.Context, req *proto.Modification, res *proto.Result) error {
+	return nil
+}
+
+// Perm modify
+func (s *Role) Perm(ctx context.Context, req *proto.Modification, res *proto.Result) error {
 	return nil
 }

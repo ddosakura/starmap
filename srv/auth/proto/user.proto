@@ -16,13 +16,14 @@ service User {
     rpc Change(UserToken) returns (UserToken) {}
 
     // 用户管理
-    rpc Insert(UserToken) returns(UserToken) {}
+    rpc Insert(UserAuth) returns(UserToken) {}
     rpc Delete(UserToken) returns(UserToken) {}
     rpc Select(UserToken) returns(UserToken) {}
     rpc Update(UserToken) returns(UserToken) {}
     
-    rpc Roles(None) returns (Result) {}
-    rpc Perms(None) returns (Result) {}
+    rpc Role(Modification) returns(Result) {}
+    rpc Roles(Identity) returns (Result) {}
+    rpc Perms(Identity) returns (Result) {}
 }
 
 message UserAuth { // save in mysql

@@ -53,3 +53,35 @@ func (*Role) Entity(ctx context.Context, req *api.Request, res *api.Response) er
 		// Finish
 		Final()
 }
+
+// Perm Modify API
+func (*Role) Perm(ctx context.Context, req *api.Request, res *api.Response) error {
+	// TODO: Perm Modify API
+	return rest.REST(ctx, req, res).
+		Chain(autoLoadAuthService).
+		Chain(rest.JWTCheck()).
+		Chain(rest.PermCheck([]string{"role:perm"}, rest.LogicalAND)).
+		// API
+		Action(rest.POST).
+		Chain(func(ctx context.Context, s *rest.Flow) error {
+			fmt.Println("M", s.Rest)
+			return s.Success(fmt.Sprintf("M %v", s.Rest))
+		}).
+		Done().
+		// API
+		Action(rest.DELETE).
+		Chain(func(ctx context.Context, s *rest.Flow) error {
+			fmt.Println("M", s.Rest)
+			return s.Success(fmt.Sprintf("M %v", s.Rest))
+		}).
+		Done().
+		// API
+		Action(rest.GET).
+		Chain(func(ctx context.Context, s *rest.Flow) error {
+			fmt.Println("M", s.Rest)
+			return s.Success(fmt.Sprintf("M %v", s.Rest))
+		}).
+		Done().
+		// Finish
+		Final()
+}

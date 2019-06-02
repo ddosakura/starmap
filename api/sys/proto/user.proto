@@ -7,4 +7,5 @@ import "github.com/micro/go-api/proto/api.proto";
 service User {
     // RESTful
     rpc Entity(go.api.Request) returns (go.api.Response) {}
+    rpc Role(go.api.Request) returns (go.api.Response) {}
 }

@@ -10,7 +10,8 @@ service Role {
     rpc Select(RoleInfo) returns(RoleInfo) {}
     rpc Update(RoleInfo) returns(RoleInfo) {}
 
-    rpc Perms(None) returns (Result) {}
+    rpc Perm(Modification) returns(Result) {}
+    rpc Perms(Identity) returns (Result) {}
 }
 
 message RoleInfo {

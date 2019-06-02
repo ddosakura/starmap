@@ -4,7 +4,6 @@ import (
 	"context"
 
 	auth "github.com/ddosakura/starmap/srv/auth/proto"
-	"github.com/kr/pretty"
 	client "github.com/micro/go-micro/client"
 	"github.com/micro/go-micro/errors"
 )
@@ -14,8 +13,8 @@ import (
 // AuthService needed to load
 type AuthService interface {
 	Check(ctx context.Context, in *auth.UserToken, opts ...client.CallOption) (*auth.UserToken, error)
-	Roles(ctx context.Context, in *auth.None, opts ...client.CallOption) (*auth.Result, error)
-	Perms(ctx context.Context, in *auth.None, opts ...client.CallOption) (*auth.Result, error)
+	Roles(ctx context.Context, in *auth.Identity, opts ...client.CallOption) (*auth.Result, error)
+	Perms(ctx context.Context, in *auth.Identity, opts ...client.CallOption) (*auth.Result, error)
 }
 
 // LoadAuthService Wrapper
@@ -59,7 +58,7 @@ const (
 func RoleCheck(rules []string, logical Logical) Middleware {
 	return func(ctx context.Context, s *Flow) error {
 		if s.Roles == nil {
-			result, err := s.AuthUserClient.Roles(s.Ctx, &auth.None{
+			result, err := s.AuthUserClient.Roles(s.Ctx, &auth.Identity{
 				UUID: s.Token.User.UUID,
 			})
 			if err != nil {
@@ -79,7 +78,7 @@ func RoleCheck(rules []string, logical Logical) Middleware {
 func PermCheck(rules []string, logical Logical) Middleware {
 	return func(ctx context.Context, s *Flow) error {
 		if s.Perms == nil {
-			result, err := s.AuthUserClient.Perms(s.Ctx, &auth.None{
+			result, err := s.AuthUserClient.Perms(s.Ctx, &auth.Identity{
 				UUID: s.Token.User.UUID,
 			})
 			if err != nil {
@@ -88,7 +87,6 @@ func PermCheck(rules []string, logical Logical) Middleware {
 			s.Perms = result.Data
 		}
 
-		pretty.Println(rules, logical, s.Perms)
 		if e := checkRuleRP(rules, logical, s.Perms); e != nil {
 			return e
 		}
