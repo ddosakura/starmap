@@ -17,8 +17,8 @@ service User {
 
     // 用户管理
     rpc Insert(UserAuth) returns(UserToken) {}
-    rpc Delete(UserToken) returns(UserToken) {}
-    rpc Select(UserToken) returns(UserToken) {}
+    rpc Delete(UserAuth) returns(UserToken) {}
+    rpc Select(UserAuth) returns(UserToken) {}
     rpc Update(UserToken) returns(UserToken) {}
     
     rpc Role(Modification) returns(Result) {}
@@ -37,6 +37,9 @@ message UserToken {
     string token = 1; // JWT
     UserAuth auth = 2;
     UserInfo user = 3;
+
+    repeated string roles = 4;
+    repeated string perms = 5;
 }
 
 message UserInfo { // save in mongo

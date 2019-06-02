@@ -44,33 +44,43 @@ func (*User) Entity(ctx context.Context, req *api.Request, res *api.Response) er
 		Action(rest.DELETE).
 		Chain(rest.PermCheck([]string{"user:delete"}, rest.LogicalAND)).
 		Chain(rest.ParamCheck(rest.PCCS{
-			"username": rest.PccMust,
+			"id": rest.PccMust,
 		})).
 		Chain(rest.ParamAutoLoad(nil, u.Auth)).
+		Chain(rest.RoleLevelCheck(u.Auth.ID)).
 		Chain(func(ctx context.Context, s *rest.Flow) error {
-			fmt.Println("M", s.Rest, u)
-			return s.Success(fmt.Sprintf("M %v", s.Rest))
+			_, err := s.AuthUserClient.(auth.UserService).Delete(ctx, u.Auth)
+			if err != nil {
+				return err
+			}
+			return s.Success(nil)
 		}).
 		Done().
 		// API
 		Action(rest.GET).
 		Chain(rest.PermCheck([]string{"user:select"}, rest.LogicalAND)).
 		Chain(rest.ParamCheck(rest.PCCS{
-			"username": rest.PccMust,
+			"$auth":    rest.PccLabel(rest.PccMust, rest.LogicalOR),
+			"id":       rest.PccLink("$auth"),
+			"username": rest.PccLink("$auth"),
 		})).
 		Chain(rest.ParamAutoLoad(nil, u.Auth)).
 		Chain(func(ctx context.Context, s *rest.Flow) error {
-			fmt.Println("M", s.Rest, u)
-			return s.Success(fmt.Sprintf("M %v", s.Rest))
+			userToken, err := s.AuthUserClient.(auth.UserService).Select(ctx, u.Auth)
+			if err != nil {
+				return err
+			}
+			return s.Success(userToken.User)
 		}).
 		Done().
 		// API
 		Action(rest.PUT).
 		Chain(rest.PermCheck([]string{"user:update"}, rest.LogicalAND)).
 		Chain(rest.ParamCheck(rest.PCCS{
-			"username": rest.PccMust,
+			"id": rest.PccMust,
 		})).
 		Chain(rest.ParamAutoLoad(nil, u.Auth)).
+		Chain(rest.RoleLevelCheck(u.Auth.ID)).
 		Chain(rest.ParamAutoLoad(nil, u.User)).
 		Chain(func(ctx context.Context, s *rest.Flow) error {
 			fmt.Println("M", s.Rest, u)

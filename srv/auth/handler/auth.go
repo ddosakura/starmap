@@ -77,22 +77,15 @@ func (s *User) Register(ctx context.Context, req *proto.UserAuth, res *proto.Use
 
 // Info Action
 func (s *User) Info(ctx context.Context, req *proto.UserToken, res *proto.UserToken) error {
-	repo, ok := common.GetMongoRepo(ctx)
-	if !ok {
-		return raw.ErrRepoNotFound
-	}
 	token, err := common.ValidUserJWT(req.Token)
 	if err != nil {
 		return err
 	}
-	user := &proto.UserInfo{}
-	c := repo.DB(raw.UserDB).C(raw.UserInfoC)
-	if err := c.Find(&bson.M{"uuid": token.UserInfo.UUID}).One(user); err != nil {
-		return raw.ErrRepoError
+	if err := s.Select(ctx, &proto.UserAuth{ID: token.UserInfo.UUID}, res); err != nil {
+		return err
 	}
-	if token, err := common.BuildUserJWT(user).Sign(jwtTerm); err == nil {
+	if token, err := common.BuildUserJWT(res.User).Sign(jwtTerm); err == nil {
 		res.Token = token
-		res.User = user
 		return nil
 	}
 	return raw.ErrSignJWT

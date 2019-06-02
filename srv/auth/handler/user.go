@@ -3,6 +3,8 @@ package handler
 import (
 	"context"
 
+	"gopkg.in/mgo.v2/bson"
+
 	"github.com/ddosakura/starmap/srv/auth/models"
 	proto "github.com/ddosakura/starmap/srv/auth/proto"
 	"github.com/ddosakura/starmap/srv/auth/raw"
@@ -66,12 +68,50 @@ func (s *User) Insert(ctx context.Context, req *proto.UserAuth, res *proto.UserT
 }
 
 // Delete Action
-func (s *User) Delete(ctx context.Context, req *proto.UserToken, res *proto.UserToken) error {
+func (s *User) Delete(ctx context.Context, req *proto.UserAuth, res *proto.UserToken) error {
+	repo, ok := common.GetGormRepo(ctx)
+	if !ok {
+		return raw.ErrRepoNotFound
+	}
+
+	if result := repo.Delete(&models.User{}, "id = ?", req.ID); result.Error != nil {
+		if result.RecordNotFound() {
+			return raw.ErrUserNotExist
+		}
+		return raw.ErrRepoError
+	} else if result.RowsAffected == 0 {
+		return raw.ErrUserNotExist
+	}
+
 	return nil
 }
 
 // Select Action
-func (s *User) Select(ctx context.Context, req *proto.UserToken, res *proto.UserToken) error {
+func (s *User) Select(ctx context.Context, req *proto.UserAuth, res *proto.UserToken) error {
+	if req.ID == "" {
+		repo, ok := common.GetGormRepo(ctx)
+		if !ok {
+			return raw.ErrRepoNotFound
+		}
+		if r := repo.Where("username = ?", req.Username).First(&models.User{UserAuth: req}); r.Error != nil {
+			if r.RecordNotFound() {
+				return raw.ErrUserNotExist
+			}
+			return raw.ErrRepoError
+		}
+	}
+	mongo, ok := common.GetMongoRepo(ctx)
+	if !ok {
+		return raw.ErrRepoNotFound
+	}
+
+	user := &proto.UserInfo{}
+	c := mongo.DB(raw.UserDB).C(raw.UserInfoC)
+	if err := c.Find(&bson.M{"uuid": req.ID}).One(user); err != nil {
+		return raw.ErrRepoError
+	}
+
+	res.User = user
 	return nil
 }
 

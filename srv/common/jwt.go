@@ -22,6 +22,8 @@ import (
 type UserJWT struct {
 	jwt.StandardClaims
 	UserInfo *proto.UserInfo
+
+	// TODO: 考虑加入Role/Perm
 }
 
 // BuildUserJWT by userinfo

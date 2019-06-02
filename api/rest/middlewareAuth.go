@@ -8,7 +8,7 @@ import (
 	"github.com/micro/go-micro/errors"
 )
 
-// Order: LoadAuthService -> JWTCheck -> RoleCheck/PermCheck
+// Order: LoadAuthService -> JWTCheck -> RoleCheck/PermCheck/SuperRole
 
 // AuthService needed to load
 type AuthService interface {
@@ -54,17 +54,24 @@ const (
 	LogicalOR
 )
 
+func roleLoader(ctx context.Context, s *Flow) error {
+	if s.Roles == nil {
+		result, err := s.AuthUserClient.Roles(s.Ctx, &auth.Identity{
+			UUID: s.Token.User.UUID,
+		})
+		if err != nil {
+			return CleanErrResponse(SrvName, err, errors.Forbidden)
+		}
+		s.Roles = result.Data
+	}
+	return nil
+}
+
 // RoleCheck Wrapper
 func RoleCheck(rules []string, logical Logical) Middleware {
 	return func(ctx context.Context, s *Flow) error {
-		if s.Roles == nil {
-			result, err := s.AuthUserClient.Roles(s.Ctx, &auth.Identity{
-				UUID: s.Token.User.UUID,
-			})
-			if err != nil {
-				return CleanErrResponse(SrvName, err, errors.Forbidden)
-			}
-			s.Roles = result.Data
+		if err := roleLoader(ctx, s); err != nil {
+			return err
 		}
 
 		if e := checkRuleRP(rules, logical, s.Roles); e != nil {
@@ -89,6 +96,28 @@ func PermCheck(rules []string, logical Logical) Middleware {
 
 		if e := checkRuleRP(rules, logical, s.Perms); e != nil {
 			return e
+		}
+		return nil
+	}
+}
+
+// RoleLevelCheck Wrapper
+func RoleLevelCheck(id string) Middleware {
+	return func(ctx context.Context, s *Flow) error {
+		if err := roleLoader(ctx, s); err != nil {
+			return err
+		}
+
+		result, err := s.AuthUserClient.Roles(s.Ctx, &auth.Identity{
+			UUID: id,
+		})
+		if err != nil {
+			return CleanErrResponse(SrvName, err, errors.Forbidden)
+		}
+
+		// Lv.1 > Lv.9
+		if RoleLevel(s.Roles) > RoleLevel(result.Data) {
+			return errors.Forbidden(SrvName, "your role rating is too low")
 		}
 		return nil
 	}

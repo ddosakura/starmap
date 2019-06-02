@@ -93,3 +93,14 @@ func checkRuleRP(rules []string, logical Logical, result []string) error {
 	}
 	return errors.Forbidden(SrvName, "no permission")
 }
+
+// RoleLevel Check
+func RoleLevel(roles []string) int {
+	result := 65535
+	for _, r := range roles {
+		if len(r) < result {
+			result = len(r)
+		}
+	}
+	return result
+}
