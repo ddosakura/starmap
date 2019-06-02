@@ -26,6 +26,8 @@ func (*User) Entity(ctx context.Context, req *api.Request, res *api.Response) er
 		Chain(autoLoadAuthService).
 		Chain(rest.JWTCheck()).
 		// API
+		// -> username, password
+		// <- userinfo
 		Action(rest.POST).
 		Chain(rest.PermCheck([]string{"user:insert"}, rest.LogicalAND)).
 		Chain(rest.ParamCheck(rest.PCCS{
@@ -42,6 +44,8 @@ func (*User) Entity(ctx context.Context, req *api.Request, res *api.Response) er
 		}).
 		Done().
 		// API
+		// -> id
+		// <- NULL
 		Action(rest.DELETE).
 		Chain(rest.PermCheck([]string{"user:delete"}, rest.LogicalAND)).
 		Chain(rest.ParamCheck(rest.PCCS{
@@ -58,6 +62,8 @@ func (*User) Entity(ctx context.Context, req *api.Request, res *api.Response) er
 		}).
 		Done().
 		// API
+		// -> id/username
+		// <- userinfo
 		Action(rest.GET).
 		Chain(rest.PermCheck([]string{"user:select"}, rest.LogicalAND)).
 		Chain(rest.ParamCheck(rest.PCCS{
@@ -75,6 +81,8 @@ func (*User) Entity(ctx context.Context, req *api.Request, res *api.Response) er
 		}).
 		Done().
 		// API
+		// -> id
+		// <- userinfo
 		Action(rest.PUT).
 		Chain(rest.PermCheck([]string{"user:update"}, rest.LogicalAND)).
 		Chain(rest.ParamCheck(rest.PCCS{
@@ -117,7 +125,8 @@ func (*User) Role(ctx context.Context, req *api.Request, res *api.Response) erro
 		Chain(rest.JWTCheck()).
 		Chain(rest.PermCheck([]string{"user:role"}, rest.LogicalAND)).
 		// API - Add role for user
-		// Param: id, name
+		// -> id, name
+		// <- []string
 		Action(rest.POST).
 		Chain(rest.ParamCheck(rest.PCCS{
 			"id":   rest.PccRename(rest.PccMust, "UUID"),
@@ -131,7 +140,8 @@ func (*User) Role(ctx context.Context, req *api.Request, res *api.Response) erro
 		Chain(playload).
 		Done().
 		// API - Del role for user
-		// Param: id, name
+		// -> id, name
+		// <- []string
 		Action(rest.DELETE).
 		Chain(rest.ParamCheck(rest.PCCS{
 			"id":   rest.PccRename(rest.PccMust, "UUID"),
@@ -145,6 +155,7 @@ func (*User) Role(ctx context.Context, req *api.Request, res *api.Response) erro
 		Chain(playload).
 		Done().
 		// API - All Roles
+		// <- []string
 		Action(rest.GET).
 		Chain(func(ctx context.Context, s *rest.Flow) error {
 			m.Modify = auth.M_List

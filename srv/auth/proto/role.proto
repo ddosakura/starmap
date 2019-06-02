@@ -5,13 +5,29 @@ package starmap.srv.auth;
 import "proto/common.proto";
 
 service Role {
+    // --- 角色管理 ---
+    // ->
+    // <- 
     rpc Insert(RoleInfo) returns(RoleInfo) {}
+    // ->
+    // <- 
     rpc Delete(RoleInfo) returns(RoleInfo) {}
+    // ->
+    // <- 
     rpc Select(RoleInfo) returns(RoleInfo) {}
+    // ->
+    // <- 
     rpc Update(RoleInfo) returns(RoleInfo) {}
 
-    rpc Perm(Modification) returns(Result) {}
+    // --- RP管理 ---
+    // 角色权限查询
+    // -> name
+    // <- Data(perm list)
     rpc Perms(Identity) returns (Result) {}
+    // 角色权限变更/全权限列表
+    // -> modify, name, subject, action
+    // <- Data(new-perm-list/all-perm-list)
+    rpc Perm(Modification) returns(Result) {}
 }
 
 message RoleInfo {

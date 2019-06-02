@@ -19,7 +19,10 @@ func (*User) Login(ctx context.Context, req *api.Request, res *api.Response) err
 	a := new(auth.UserAuth)
 	return rest.REST(ctx, req, res).
 		Chain(autoLoadAuthService).
-		// API
+		// API - 登录
+		// -> username, password
+		// <- token, user
+		// !! set-token
 		Action(rest.POST | rest.GET).
 		Chain(rest.ParamCheck(map[string]*rest.PCC{
 			"username": rest.PccMust,
@@ -44,7 +47,10 @@ func (*User) Register(ctx context.Context, req *api.Request, res *api.Response) 
 	a := new(auth.UserAuth)
 	return rest.REST(ctx, req, res).
 		Chain(autoLoadAuthService).
-		// API
+		// API - 注册
+		// -> username, password
+		// <- token, user
+		// !! set-token
 		Action(rest.POST | rest.GET).
 		Chain(rest.ParamCheck(map[string]*rest.PCC{
 			"username": rest.PccMust,
@@ -68,7 +74,9 @@ func (*User) Register(ctx context.Context, req *api.Request, res *api.Response) 
 func (*User) Info(ctx context.Context, req *api.Request, res *api.Response) error {
 	return rest.REST(ctx, req, res).
 		Chain(autoLoadAuthService).
-		// API
+		// API - 自身信息
+		// <- token, user
+		// !! set-token
 		Action(rest.POST | rest.GET).
 		Chain(func(ctx context.Context, s *rest.Flow) error {
 			// didn't JWTCheck, beack Info API will also check it
@@ -95,7 +103,10 @@ func (*User) Update(ctx context.Context, req *api.Request, res *api.Response) er
 	return rest.REST(ctx, req, res).
 		Chain(autoLoadAuthService).
 		Chain(rest.JWTCheck()).
-		// API
+		// API - 更改自身信息
+		// -> pass/userinfo (optional, pass have priority)
+		// <- token, user
+		// !! set-token
 		Action(rest.POST | rest.GET).
 		Chain(rest.ParamAutoLoad(nil, u.Auth)).
 		Chain(rest.ParamAutoLoad(nil, u.User)).

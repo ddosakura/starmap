@@ -3,10 +3,21 @@ syntax = "proto3";
 package starmap.srv.auth;
 
 service Perm {
+    // --- 权限管理 ---
+    // ->
+    // <- 
     rpc Insert(PermInfo) returns(PermInfo) {}
+    // ->
+    // <- 
     rpc Delete(PermInfo) returns(PermInfo) {}
+    // ->
+    // <- 
     rpc Select(PermInfo) returns(PermInfo) {}
+    // ->
+    // <- 
     rpc Update(PermInfo) returns(PermInfo) {}
+    // ->
+    // <- 
 }
 
 message PermInfo {

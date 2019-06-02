@@ -79,10 +79,11 @@ func (*Role) Perm(ctx context.Context, req *api.Request, res *api.Response) erro
 		Chain(rest.JWTCheck()).
 		Chain(rest.PermCheck([]string{"role:perm"}, rest.LogicalAND)).
 		// API - Add perm for role
-		// Param: name(role_name), subject, action
+		// -> role, subject, action
+		// <- []string
 		Action(rest.POST).
 		Chain(rest.ParamCheck(rest.PCCS{
-			"name":    rest.PccMust,
+			"role":    rest.PccRename(rest.PccMust, "name"),
 			"subject": rest.PccMust,
 			"action":  rest.PccMust,
 		})).
@@ -94,10 +95,11 @@ func (*Role) Perm(ctx context.Context, req *api.Request, res *api.Response) erro
 		Chain(playload).
 		Done().
 		// API - Del perm for role
-		// Param: name, subject, action
+		// -> role, subject, action
+		// <- []string
 		Action(rest.DELETE).
 		Chain(rest.ParamCheck(rest.PCCS{
-			"name":    rest.PccMust,
+			"role":    rest.PccRename(rest.PccMust, "name"),
 			"subject": rest.PccMust,
 			"action":  rest.PccMust,
 		})).
@@ -109,6 +111,7 @@ func (*Role) Perm(ctx context.Context, req *api.Request, res *api.Response) erro
 		Chain(playload).
 		Done().
 		// API - All Perms
+		// <- []string
 		Action(rest.GET).
 		Chain(func(ctx context.Context, s *rest.Flow) error {
 			m.Modify = auth.M_List

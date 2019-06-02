@@ -5,25 +5,58 @@ package starmap.srv.auth;
 import "proto/common.proto";
 
 service User {
-    // 登录注册
+    // --- 登录注册 ---
+    // 登录
+    // -> username, password
+    // <- token(new sign), user
     rpc Login(UserAuth) returns (UserToken) {}
+    // 注册
+    // -> [Call Insert]
+    // <- token(new-sign), user
     rpc Register(UserAuth) returns (UserToken) {}
-    // rpc Logout(UserToken) returns (None) {}
 
-    // 用户认证
-    rpc Info(UserToken) returns (UserToken) {} // Also Check JWT
-    rpc Check(UserToken) returns (UserToken) {} // Check JWT for Other Service
+    // --- 用户认证 ---
+    // 用户信息 - from DB, Also Check JWT
+    // -> token
+    // <- token(new-sign), user
+    rpc Info(UserToken) returns (UserToken) {}
+    // JWT 检查 - Check JWT for Other Service
+    // -> token
+    // -- [Call Select] by id from token
+    // <- token(may-new-sign), user
+    rpc Check(UserToken) returns (UserToken) {}
+    // 更改自身信息
+    // -> auth/user
+    // <- token(new-sign), user
     rpc Change(UserToken) returns (UserToken) {}
 
-    // 用户管理
+    // --- 用户管理 ---
+    // -> username, password
+    // <- user
     rpc Insert(UserAuth) returns(UserToken) {}
+    // -> id
+    // <- NULL
     rpc Delete(UserAuth) returns(UserToken) {}
+    // -> id/username
+    // <- user
     rpc Select(UserAuth) returns(UserToken) {}
+    // -> [Call Change]
+    // <- user
     rpc Update(UserToken) returns(UserToken) {}
     
-    rpc Role(Modification) returns(Result) {}
+    // --- RP管理 ---
+    // 用户角色查询
+    // -> UUID
+    // <- Data(role-list)
     rpc Roles(Identity) returns (Result) {}
+    // 用户权限查询
+    // -> UUID
+    // <- Data(perm-list)
     rpc Perms(Identity) returns (Result) {}
+    // 用户角色变更/全角色列表
+    // -> modify, UUID, name
+    // <- Data(new-role-list/all-role-list)
+    rpc Role(Modification) returns(Result) {}
 }
 
 message UserAuth { // save in mysql

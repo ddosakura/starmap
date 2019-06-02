@@ -16,7 +16,8 @@ func (*User) Roles(ctx context.Context, req *api.Request, res *api.Response) err
 	return rest.REST(ctx, req, res).
 		Chain(autoLoadAuthService).
 		Chain(rest.JWTCheck()).
-		// API
+		// API - 自身角色查询
+		// <- []string
 		Action(rest.POST | rest.GET).
 		Chain(func(ctx context.Context, s *rest.Flow) error {
 			res, err := s.AuthUserClient.Roles(s.Ctx, &auth.Identity{
@@ -37,7 +38,8 @@ func (*User) Perms(ctx context.Context, req *api.Request, res *api.Response) err
 	return rest.REST(ctx, req, res).
 		Chain(autoLoadAuthService).
 		Chain(rest.JWTCheck()).
-		// API
+		// API - 自身权限查询
+		// <- []string
 		Action(rest.POST | rest.GET).
 		Chain(func(ctx context.Context, s *rest.Flow) error {
 			res, err := s.AuthUserClient.Perms(s.Ctx, &auth.Identity{
@@ -65,7 +67,8 @@ func (*Role) Perms(ctx context.Context, req *api.Request, res *api.Response) err
 		Chain(rest.JWTCheck()).
 		// 系统管理员专用
 		Chain(rest.RoleCheck([]string{"sys"}, rest.LogicalAND)).
-		// API
+		// API - 角色权限查询
+		// <- []string
 		Action(rest.POST | rest.GET).
 		Chain(rest.ParamCheck(rest.PCCS{
 			"role": &rest.PCC{Must: true},
