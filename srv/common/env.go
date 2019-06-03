@@ -5,7 +5,7 @@ import (
 	"github.com/timest/env"
 )
 
-type config struct {
+type starmap struct {
 	Repo struct {
 		Mongo struct {
 			URL string `env:"URL" default:"root:starpass@127.0.0.1:27017"`
@@ -26,13 +26,13 @@ type config struct {
 	} `env:"KEY"`
 }
 
-func (c *config) KeyJWT() []byte {
+func (c *starmap) KeyJWT() []byte {
 	return []byte(c.Key.JWT)
 }
 
 // config(s)
 var (
-	ENV = new(config)
+	ENV = new(starmap)
 )
 
 func init() {

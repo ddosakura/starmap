@@ -14,7 +14,7 @@ proto:
 
 .PHONY: dev
 dev:
-	CONFIG_KEY_JWT=123456 go run . --registry consul --registry_address 127.0.0.1:8500
+	STARMAP_KEY_JWT=123456 go run . --registry consul --registry_address 127.0.0.1:8500
 
 .PHONY: test
 test:
