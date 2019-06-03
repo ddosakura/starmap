@@ -98,6 +98,8 @@ services:
           - mongo
   mysql:
     image: mysql:5.7
+    ports:
+      - 3306:3306
     #volumes:
     #  - path/to/???/conf:/etc/mysql/conf.d
     #  - path/to/???/logs:/logs
@@ -116,6 +118,53 @@ services:
       default:
         aliases:
           - redis
+
+  # Services API
+  starmap-auth-api:
+    image: starmap-auth-api:latest
+    depends_on:
+    - consul
+    - mysql
+    - mongo
+    - redis
+    environment:
+      MICRO_REGISTRY: consul
+      MICRO_REGISTRY_ADDRESS: "registry:8500"
+  starmap-sys-api:
+    image: starmap-sys-api:latest
+    depends_on:
+    - consul
+    - mysql
+    - mongo
+    - redis
+    environment:
+      MICRO_REGISTRY: consul
+      MICRO_REGISTRY_ADDRESS: "registry:8500"
+  
+  # Services Srv
+  starmap-auth-srv:
+    image: starmap-auth-srv:latest
+    depends_on:
+    - consul
+    - mysql
+    - mongo
+    - redis
+    environment:
+      MICRO_REGISTRY: consul
+      MICRO_REGISTRY_ADDRESS: "registry:8500"
+      STARMAP_REPO_MONGO_URL: root:starpass@mongo:27017
+      STARMAP_REPO_REDIS_URL: redis:6379
+      STARMAP_REPO_MYSQL_HOST: mysql:3306
+      STARMAP_REPO_MYSQL_USER: root
+      STARMAP_REPO_MYSQL_PASS: starpass
+      STARMAP_REPO_MYSQL_DB: starmap
+      STARMAP_KEY_JWT: 123456
+    
+  #manage-web:
+  #  image: starmap-manage-web:latest
+  #  environment:
+  #    MICRO_REGISTRY: consul
+  #    MICRO_REGISTRY_ADDRESS: "registry:8500"
 
 networks:
   default:
