@@ -31,4 +31,4 @@ RESTful tools based on Middleware for micro api
 + ParamAutoLoad (放在 ParamCheck 前面将无法使用默认值、重名名)
 + RoleCheck/PermCheck/SuperRole
     + 须要请求认证服务
-    + RoleCheck 可能需要用 ParamAutoLoad 加载参数
+    + SuperRole 可能需要用 ParamAutoLoad 加载参数
