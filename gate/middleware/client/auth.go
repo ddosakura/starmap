@@ -18,12 +18,12 @@ func AuthWrapper(service micro.Service) echo.MiddlewareFunc {
 	userClient := auth.NewUserService(raw.SrvName, service.Client())
 	roleClient := auth.NewRoleService(raw.SrvName, service.Client())
 	permClient := auth.NewPermService(raw.SrvName, service.Client())
-	return func(fn echo.HandlerFunc) echo.HandlerFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(ctx echo.Context) error {
 			ctx.Set(srvAuthUser, userClient)
 			ctx.Set(srvAuthRole, roleClient)
 			ctx.Set(srvAuthPerm, permClient)
-			return fn(ctx)
+			return next(ctx)
 		}
 	}
 }

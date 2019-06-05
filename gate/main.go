@@ -31,7 +31,7 @@ func main() {
 	})
 
 	go func() {
-		e.Logger.Fatal(e.Start(":8088"))
+		e.Logger.Fatal(e.Start(ENV.Gateway.Addr))
 	}()
 
 	// Run service

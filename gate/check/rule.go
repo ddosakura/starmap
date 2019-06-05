@@ -59,6 +59,9 @@ type Must struct {
 	l     logical
 }
 
+// NoMust Check
+var NoMust = new(Must)
+
 // M ust
 func M(ks ...string) *Must {
 	return &Must{
@@ -124,7 +127,7 @@ func (m *Must) test(cs url.Values) error {
 
 // Test Params
 func (m *Must) Test(vs url.Values) (Model, error) {
-	if m != nil {
+	if m != nil && m.ks != nil {
 		if vs == nil {
 			return nil, NewErrParamWrong("", "no params!")
 		}
@@ -144,6 +147,3 @@ func (m *Must) Test(vs url.Values) (Model, error) {
 	}
 	return v, nil
 }
-
-// NoMust Check
-var NoMust *Must

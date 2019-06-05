@@ -14,14 +14,16 @@ type BaseLoader struct {
 }
 
 // Load for entity
-func (b *BaseLoader) Load(e interface{}) error {
+func (b *BaseLoader) Load(es ...interface{}) error {
 	if b.Err != nil {
 		return b.Err
 	}
-	if bs, err := json.Marshal(b.entity); err != nil {
-		return ErrAuthLoadCrash
-	} else if err = json.Unmarshal(bs, e); err != nil {
-		return ErrAuthLoadCrash
+	for _, e := range es {
+		if bs, err := json.Marshal(b.entity); err != nil {
+			return ErrAuthLoadCrash
+		} else if err = json.Unmarshal(bs, e); err != nil {
+			return ErrAuthLoadCrash
+		}
 	}
 	return nil
 }

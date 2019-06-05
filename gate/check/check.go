@@ -48,5 +48,5 @@ type RuleBuilder interface {
 
 // Loader for params
 type Loader interface {
-	Load(interface{}) error
+	Load(...interface{}) error
 }
