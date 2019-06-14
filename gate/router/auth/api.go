@@ -11,10 +11,6 @@ import (
 	"github.com/labstack/echo"
 )
 
-// API - 登录
-// -> username, password
-// <- userinfo
-// !! set-token
 func login(c echo.Context) error {
 	ut, e := client.AuthUser(c).
 		Login(context.Background(),
@@ -30,10 +26,6 @@ func login(c echo.Context) error {
 		Build(ut.User)
 }
 
-// API - 注册
-// -> username, password
-// <- userinfo
-// !! set-token
 func register(c echo.Context) error {
 	ut, e := client.AuthUser(c).
 		Register(context.Background(),
@@ -49,9 +41,6 @@ func register(c echo.Context) error {
 		Build(ut.User)
 }
 
-// API - 自身信息
-// <- userinfo
-// !! set-token
 func info(c echo.Context) error {
 	token := mAuth.GetJWT(c)
 	ut, e := client.AuthUser(c).
@@ -68,10 +57,6 @@ func info(c echo.Context) error {
 		Build(ut.User)
 }
 
-// API - 更改自身信息
-// -> pass/userinfo (optional, pass have priority)
-// <- userinfo
-// !! set-token
 func update(c echo.Context) error {
 	jwt := mAuth.JWT(c)
 	u := c.Get(kuap).(*auth.UserToken)

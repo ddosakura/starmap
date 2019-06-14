@@ -14,12 +14,28 @@ import (
 func Bind(e *echo.Echo) {
 	g := e.Group("/auth")
 
+	// API - 登录
+	// -> user, pass
+	// <- userinfo
+	// !! set-token
 	g.POST("/login", login, userAuthParam).Name = "auth.login"
+
+	// API - 注册
+	// -> user, pass
+	// <- userinfo
+	// !! set-token
 	g.POST("/register", register, userAuthParam).Name = "auth.register"
 
-	// didn't JWTCheck, beack Srv.Auth.Info will also check it
+	// API - 自身信息
+	// <- userinfo
+	// !! set-token
+	// *** didn't JWTCheck, beack Srv.Auth.Info will also check it ***
 	g.POST("/info", info).Name = "auth.info"
 
+	// API - 更改自身信息
+	// -> pass/userinfo (optional, pass have priority)
+	// <- userinfo
+	// !! set-token
 	g.POST("/update", update, userAuthPassWithUserInfo, mAuth.JWTCheck).Name = "auth.update"
 }
 

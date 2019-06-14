@@ -6,7 +6,7 @@
     </template>
     <template v-else-if="authState == 1">
       <!-- 登录(后台无法注册) -->
-      <LoginPage />
+      <LoginPage/>
     </template>
     <template v-else>
       <!-- 后台页面 -->
@@ -20,6 +20,8 @@
 </template>
 
 <script>
+import { mapState, mapActions, mapGetters } from "vuex";
+
 import LoadingPage from "@/views/LoadingPage.vue";
 import LoginPage from "@/views/LoginPage.vue";
 
@@ -29,27 +31,19 @@ export default {
     LoginPage
   },
   data() {
-    //this.$axios
-    //  .get("/auth/user/login?username=regtest&password=123")
-    //  .then(res => console.log(res.data))
-    //  .then(() => {});
-    return {
-      // authState for app
-      // 0: loading
-      // 1: logout
-      // 2: login
-      authState: 0
-    };
+    return {};
+  },
+  computed: {
+    ...mapState({}),
+    ...mapGetters(["authState"]),
+  },
+  methods: {
+    ...mapActions({
+      getAuthInfo: "getAuthInfo"
+    })
   },
   created() {
-    this.$axios
-      .get("/auth/user/info")
-      .then(res => {
-        this.authState = 2
-      }).catch((e) => {
-        console.log(e)
-        this.authState = 1
-      });
+    this.getAuthInfo();
   }
 };
 </script>
